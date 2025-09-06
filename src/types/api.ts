@@ -35,3 +35,78 @@ export interface ApiClient {
   delete<T = any>(url: string, config?: Partial<RequestConfig>): Promise<ApiResponse<T>>;
   patch<T = any>(url: string, data?: any, config?: Partial<RequestConfig>): Promise<ApiResponse<T>>;
 }
+
+// Itinerary API Response Types
+export interface ItineraryApiResponse {
+  id: string;
+  from: string;
+  to: string;
+  fromIata: string;
+  toIata: string;
+  numberOfTravellers: number;
+  budget: number;
+  typeOfTrip: string;
+  timeframe: string;
+  numberOfAdults: number;
+  numberOfKids: number;
+  generatedItinerary: {
+    budgeted: ItineraryTier;
+    premium: ItineraryTier;
+    luxury: ItineraryTier;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ItineraryTier {
+  overview: {
+    trip_type: string;
+    total_travellers: {
+      adults: number;
+      kids: number;
+    };
+    duration: string;
+    total_cost: number;
+    cost_breakdown: {
+      flights: number;
+      hotels: number;
+      activities: number;
+      meals: number;
+      commute: number;
+    };
+  };
+  days: ItineraryDay[];
+  upsell: UpsellOption[];
+}
+
+export interface ItineraryDay {
+  day: number;
+  schedule: ScheduleItem[];
+}
+
+export interface ScheduleItem {
+  type: 'flight' | 'hotel' | 'activity' | 'meal' | 'commute';
+  name?: string;
+  description?: string;
+  airline?: string;
+  departure_time?: string;
+  arrival_time?: string;
+  class?: string;
+  check_in?: string;
+  start_time?: string;
+  end_time?: string;
+  location?: string;
+  from?: string;
+  to?: string;
+  mode?: string;
+  price: number;
+  amenities?: string[];
+  time?: string;
+}
+
+export interface UpsellOption {
+  type: 'flight' | 'hotel' | 'activity' | 'meal' | 'commute';
+  name: string;
+  upgrade_cost: number;
+  benefits: string[];
+}

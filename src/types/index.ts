@@ -41,3 +41,12 @@ export interface BudgetEstimate {
 
 export type StepType = 'planning' | 'tier-selection' | 'booking';
 export type LayoutMode = 'split' | 'full-itinerary';
+
+// Re-export API types
+export type {
+  ItineraryApiResponse,
+  ItineraryTier,
+  ItineraryDay,
+  ScheduleItem,
+  UpsellOption
+} from './api';

@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { ArrowRight, CreditCard } from 'lucide-react';
 import { StepType, TierType, ItineraryItem, Message, BudgetEstimate } from '../types';
+import { ItineraryApiResponse } from '../types/api';
 
 interface StepRendererProps {
   currentStep: StepType;
@@ -36,6 +37,7 @@ interface StepRendererProps {
   onDeleteItem: (id: string) => void;
   onActiveTabChange: (tab: string) => void;
   getCurrentBudget: () => number;
+  apiResponse?: ItineraryApiResponse;
 }
 
 const StepRenderer: React.FC<StepRendererProps> = ({
@@ -61,7 +63,8 @@ const StepRenderer: React.FC<StepRendererProps> = ({
   onEditItem,
   onDeleteItem,
   onActiveTabChange,
-  getCurrentBudget
+  getCurrentBudget,
+  apiResponse
 }) => {
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -213,6 +216,8 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     return (
       <EnhancedItineraryView
         itinerary={itinerary}
+        destination={destination}
+        dates={dates}
         selectedTier={selectedTier}
         userRequest={userRequest}
         totalEstimate={totalEstimate}
@@ -220,6 +225,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({
         onEditItem={onEditItem}
         onDeleteItem={onDeleteItem}
         getCurrentBudget={getCurrentBudget}
+        apiResponse={apiResponse}
       />
     );
   }

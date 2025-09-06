@@ -3,6 +3,7 @@ import { MainLayout } from './components/MainLayout';
 import StepRenderer from './components/StepRenderer';
 import { useAppState } from './hooks/useAppState';
 import { useAppLogic } from './hooks/useAppLogic';
+import { mockItineraryResponse } from './data/mockApiResponse';
 
 export default function App() {
   const appState = useAppState();
@@ -48,6 +49,7 @@ export default function App() {
         onDeleteItem={appLogic.handleDeleteItem}
         onActiveTabChange={appState.setActiveTab}
         getCurrentBudget={appState.getCurrentBudget}
+        apiResponse={mockItineraryResponse}
       />
     </MainLayout>
   );

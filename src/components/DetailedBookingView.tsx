@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { getFormattedPrice } from '../utils/itineraryTransform';
 import { 
   Plane, 
   Hotel, 
@@ -329,7 +330,7 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
                         </span>
                       )}
                       <span className="text-2xl font-bold text-primary">
-                        ${item.price}
+                        {getFormattedPrice(item.price)}
                       </span>
                     </div>
                   </div>
