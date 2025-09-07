@@ -5,9 +5,12 @@ import { ItineraryDisplay } from './ItineraryDisplay';
 import { EnhancedItineraryView } from './EnhancedItineraryView';
 import { TierSelector } from './TierSelector';
 import { BookingInterface } from './BookingInterface';
+// Removed TrackingEntriesDisplay import - using hook directly
+import { ItineraryLoadingScreen } from './ItineraryLoadingScreen';
+import { useTrackingPolling } from '../hooks/useTrackingPolling';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+// Removed Tabs imports - using custom implementation
 import { Badge } from './ui/badge';
 import { ArrowRight, CreditCard } from 'lucide-react';
 import { StepType, TierType, ItineraryItem, Message, BudgetEstimate } from '../types';
@@ -66,6 +69,42 @@ const StepRenderer: React.FC<StepRendererProps> = ({
   getCurrentBudget,
   apiResponse
 }) => {
+  const [generatedItineraryData, setGeneratedItineraryData] = React.useState<any>(null); // TODO: Use this data to populate itinerary
+  const [showTierSelection, setShowTierSelection] = React.useState(false);
+  console.log('Generated itinerary data:', generatedItineraryData); // Debug log
+
+  const handleItineraryGenerated = React.useCallback((data: any) => {
+    console.log('Itinerary generated:', data);
+    setGeneratedItineraryData(data);
+    // Switch to full itinerary view
+    // You might want to add a prop to handle this
+  }, []);
+
+  const handleItineraryGenerationStart = React.useCallback(() => {
+    console.log('Starting itinerary generation...');
+  }, []);
+
+  const handleProceedToTiers = React.useCallback(() => {
+    console.log('Proceeding to tier selection...');
+    setShowTierSelection(true);
+  }, []);
+
+  const handleTierSelect = React.useCallback((tier: TierType) => {
+    console.log('Tier selected:', tier);
+    onTierSelect(tier);
+    setShowTierSelection(false);
+  }, [onTierSelect]);
+
+  const handleBackFromTiers = React.useCallback(() => {
+    setShowTierSelection(false);
+  }, []);
+
+  // Use the hook directly to get the loading state
+  const { isGeneratingItinerary } = useTrackingPolling({
+    enabled: true,
+    onItineraryGenerated: handleItineraryGenerated,
+    onItineraryGenerationStart: handleItineraryGenerationStart
+  });
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'planning':
@@ -74,32 +113,63 @@ const StepRenderer: React.FC<StepRendererProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left side - Chat Interface */}
               <div className="space-y-6">
-                <Tabs value={activeTab} onValueChange={onActiveTabChange} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="voice">Voice Assistant</TabsTrigger>
-                    <TabsTrigger value="chat">Text Chat</TabsTrigger>
-                  </TabsList>
+                {/* Custom Tab Implementation */}
+                <div className="w-full">
+                  <div className="flex border-b border-gray-200 mb-6">
+                    <button
+                      onClick={() => {
+                        console.log('Voice tab clicked');
+                        onActiveTabChange('voice');
+                      }}
+                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        activeTab === 'voice'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      Voice Assistant
+                    </button>
+                    <button
+                      onClick={() => {
+                        console.log('Chat tab clicked');
+                        onActiveTabChange('chat');
+                      }}
+                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        activeTab === 'chat'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      Text Chat
+                    </button>
+                  </div>
                   
-                  <TabsContent value="voice" className="mt-6 border border-gray-200 rounded-lg p-4 bg-white">
-                    <ElevenLabsConvAI
-                      onVoiceInput={onVoiceInput}
-                      isListening={isListening}
-                      onToggleListening={onToggleListening}
-                    />
-                  </TabsContent>
+                  {/* Tab Content */}
+                  {activeTab === 'voice' && (
+                    <div className="mt-6 border border-gray-200 rounded-lg p-4 bg-white">
+                      <ElevenLabsConvAI
+                        onVoiceInput={onVoiceInput}
+                        isListening={isListening}
+                        onToggleListening={onToggleListening}
+                      />
+                    </div>
+                  )}
                   
-                  <TabsContent value="chat" className="mt-6 border border-gray-200 rounded-lg p-4 bg-white">
-                    <ChatInterface
-                      onChatInput={onChatInput}
-                      messages={messages}
-                    />
-                  </TabsContent>
-                </Tabs>
+                  {activeTab === 'chat' && (
+                    <div className="mt-6 border border-gray-200 rounded-lg p-4 bg-white">
+                      <ChatInterface
+                        onChatInput={onChatInput}
+                        messages={messages}
+                      />
+                    </div>
+                  )}
+                  
+                </div>
               </div>
               
-              {/* Right side - Itinerary Display */}
+              {/* Right side - Itinerary Display and Tracking */}
               <div className="space-y-6">
-                <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                <div className=" bg-white">
                   <ItineraryDisplay
                     itinerary={itinerary}
                     destination={destination}
@@ -108,6 +178,8 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                     onDeleteItem={onDeleteItem}
                   />
                 </div>
+                
+                {/* Background tracking handled by hook above */}
               </div>
             </div>
           </div>
@@ -212,25 +284,74 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     }
   };
 
+  // Show tier selection if requested
+  if (showTierSelection && generatedItineraryData) {
+    // Get budget estimates from the generated data (map 'budgeted' to 'economy')
+    const budgetEstimate = generatedItineraryData.generatedItinerary ? {
+      economy: generatedItineraryData.generatedItinerary.budgeted?.overview?.total_cost || 0,
+      premium: generatedItineraryData.generatedItinerary.premium?.overview?.total_cost || 0,
+      luxury: generatedItineraryData.generatedItinerary.luxury?.overview?.total_cost || 0,
+    } : totalEstimate;
+
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Button variant="outline" onClick={handleBackFromTiers}>
+            ← Back to Itinerary
+          </Button>
+        </div>
+        <TierSelector
+          selectedTier={selectedTier}
+          onTierSelect={handleTierSelect}
+          totalEstimate={budgetEstimate}
+        />
+      </div>
+    );
+  }
+
+  // Show expanded itinerary view if we have generated data
+  if (generatedItineraryData) {
+    return (
+      <EnhancedItineraryView
+        itinerary={generatedItineraryData.itinerary || itinerary}
+        destination={generatedItineraryData.destination || destination}
+        dates={generatedItineraryData.dates || dates}
+        selectedTier={selectedTier || undefined}
+        onBackToChat={() => {
+          setGeneratedItineraryData(null);
+          setShowTierSelection(false);
+          onBackToChat();
+        }}
+        onEditItem={onEditItem}
+        onDeleteItem={onDeleteItem}
+        onProceedToTiers={handleProceedToTiers}
+        apiResponse={generatedItineraryData}
+      />
+    );
+  }
+
   if (layoutMode === 'full-itinerary') {
     return (
       <EnhancedItineraryView
         itinerary={itinerary}
         destination={destination}
         dates={dates}
-        selectedTier={selectedTier}
-        userRequest={userRequest}
-        totalEstimate={totalEstimate}
+        selectedTier={selectedTier || undefined}
         onBackToChat={onBackToChat}
         onEditItem={onEditItem}
         onDeleteItem={onDeleteItem}
-        getCurrentBudget={getCurrentBudget}
+        onProceedToTiers={() => {}}
         apiResponse={apiResponse}
       />
     );
   }
 
-  return renderCurrentStep();
+  return (
+    <>
+      {renderCurrentStep()}
+      {isGeneratingItinerary && <ItineraryLoadingScreen />}
+    </>
+  );
 };
 
 export default StepRenderer;

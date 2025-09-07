@@ -18,18 +18,20 @@ export function transformItineraryResponse(apiResponse: ItineraryApiResponse) {
     numberOfKids: apiResponse.numberOfKids,
   };
 
-  // Transform budget estimates
+  // Transform budget estimates with fallbacks
   const budgetEstimate: BudgetEstimate = {
-    economy: generatedItinerary.budgeted.overview.total_cost,
-    premium: generatedItinerary.premium.overview.total_cost,
-    luxury: generatedItinerary.luxury.overview.total_cost,
+    economy: generatedItinerary.budgeted?.overview?.total_cost || 0,
+    premium: generatedItinerary.premium?.overview?.total_cost || generatedItinerary.budgeted?.overview?.total_cost || 0,
+    luxury: generatedItinerary.luxury?.overview?.total_cost || generatedItinerary.budgeted?.overview?.total_cost || 0,
   };
 
-  // Transform itinerary items for each tier
+  // Transform itinerary items for each tier with fallbacks
   const transformedItineraries = {
-    economy: transformTierItinerary(generatedItinerary.budgeted, 'economy'),
-    premium: transformTierItinerary(generatedItinerary.premium, 'premium'),
-    luxury: transformTierItinerary(generatedItinerary.luxury, 'luxury'),
+    economy: generatedItinerary.budgeted ? transformTierItinerary(generatedItinerary.budgeted, 'economy') : [],
+    premium: generatedItinerary.premium ? transformTierItinerary(generatedItinerary.premium, 'premium') : 
+             generatedItinerary.budgeted ? transformTierItinerary(generatedItinerary.budgeted, 'premium') : [],
+    luxury: generatedItinerary.luxury ? transformTierItinerary(generatedItinerary.luxury, 'luxury') : 
+            generatedItinerary.budgeted ? transformTierItinerary(generatedItinerary.budgeted, 'luxury') : [],
   };
 
   return {
@@ -41,9 +43,14 @@ export function transformItineraryResponse(apiResponse: ItineraryApiResponse) {
 }
 
 // Transform individual tier itinerary
-function transformTierItinerary(tier: ItineraryTier, tierType: TierType) {
+function transformTierItinerary(tier: ItineraryTier | undefined, tierType: TierType) {
   const itineraryItems: ItineraryItem[] = [];
   const bookingItems: BookingItem[] = [];
+
+  // Return empty arrays if no tier data
+  if (!tier || !tier.days) {
+    return itineraryItems;
+  }
 
   // Process each day
   tier.days.forEach((day) => {
@@ -125,14 +132,25 @@ function mapScheduleTypeToBookingCategory(scheduleType: string): 'flights' | 'ho
 }
 
 // Extract cost breakdown for display
-export function getCostBreakdown(tier: ItineraryTier) {
+export function getCostBreakdown(tier: ItineraryTier | undefined) {
+  if (!tier || !tier.overview || !tier.overview.cost_breakdown) {
+    return {
+      flights: 0,
+      hotels: 0,
+      activities: 0,
+      meals: 0,
+      commute: 0,
+      total: 0,
+    };
+  }
+  
   return {
-    flights: tier.overview.cost_breakdown.flights,
-    hotels: tier.overview.cost_breakdown.hotels,
-    activities: tier.overview.cost_breakdown.activities,
-    meals: tier.overview.cost_breakdown.meals,
-    commute: tier.overview.cost_breakdown.commute,
-    total: tier.overview.total_cost,
+    flights: tier.overview.cost_breakdown.flights || 0,
+    hotels: tier.overview.cost_breakdown.hotels || 0,
+    activities: tier.overview.cost_breakdown.activities || 0,
+    meals: tier.overview.cost_breakdown.meals || 0,
+    commute: tier.overview.cost_breakdown.commute || 0,
+    total: tier.overview.total_cost || 0,
   };
 }
 
@@ -142,9 +160,10 @@ export function getFormattedDuration(duration: string) {
 }
 
 // Get formatted price
-export function getFormattedPrice(price: number, currency: string = 'USD') {
-  return new Intl.NumberFormat('en-US', {
+export function getFormattedPrice(price: number, currency: string = 'INR') {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency,
+    maximumFractionDigits: 0,
   }).format(price);
 }

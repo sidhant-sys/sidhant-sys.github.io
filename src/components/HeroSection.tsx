@@ -2,7 +2,9 @@ import React from 'react';
 
 export const HeroSection: React.FC = () => {
   return (
-    <div className="relative h-64 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800">
+    <div className="relative h-64" style={{
+      background: 'linear-gradient(to right, #dbeafe, #93c5fd, #1e40af)'
+    }}>
       {/* Amadeus Logo - Top Left */}
       <div className="absolute top-4 left-6 z-10">
         <img 
@@ -15,20 +17,13 @@ export const HeroSection: React.FC = () => {
       {/* Project Name - Centered */}
       <div className="flex items-center justify-center h-full">
         <div className="text-center space-y-2">
-          <h1 className="text-6xl font-bold mb-2 drop-shadow-2xl" style={{
-            background: 'linear-gradient(to right, #D3CCE3, #E9E4F0)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
+          <h1 className="text-2xl font-bold mb-2 text-white">
             Hermes
           </h1>
-          <p className="text-lg text-white font-medium">
-            AI Itinerary Oracle
-          </p>
-          <p className="text-sm text-white max-w-md mx-auto">
-            Divine travel planning powered by intelligent voice guidance
-          </p>
+           <p className="text-base text-white font-medium">
+             Intelligent Travel Planning Assistant
+           </p>
+          
         </div>
       </div>
       

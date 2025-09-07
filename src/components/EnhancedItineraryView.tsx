@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { AspectRatio } from './ui/aspect-ratio';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ItineraryDisplay } from './ItineraryDisplay';
 import { DetailedBookingView } from './DetailedBookingView';
-import { transformItineraryResponse, getCostBreakdown, getFormattedPrice, getFormattedDuration } from '../utils/itineraryTransform';
-import { ItineraryApiResponse, TierType } from '../types/api';
+import { transformItineraryResponse, getCostBreakdown, getFormattedPrice } from '../utils/itineraryTransform';
+import { ItineraryApiResponse } from '../types/api';
+import { TierType } from './TierSelector';
 import { 
   MapPin, 
   Calendar, 
@@ -19,16 +20,13 @@ import {
   Video,
   Plane,
   Hotel,
-  Star,
   Utensils,
-  Car,
-  ShoppingCart,
+  Settings,
   ArrowRight,
   MessageSquare,
   Grid,
   List,
-  DollarSign,
-  Clock
+  BarChart3
 } from 'lucide-react';
 
 interface ItineraryItem {
@@ -65,23 +63,6 @@ interface BookingCategory {
   color: string;
 }
 
-interface BookingItem {
-  id: string;
-  type: 'flight' | 'hotel' | 'activity' | 'restaurant' | 'transport';
-  name: string;
-  location: string;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  reviewCount: number;
-  image: string;
-  description: string;
-  features: string[];
-  duration?: string;
-  category?: string;
-  available: boolean;
-  tier: string[];
-}
 
 interface EnhancedItineraryViewProps {
   itinerary: ItineraryItem[];
@@ -92,8 +73,6 @@ interface EnhancedItineraryViewProps {
   onBackToChat: () => void;
   onProceedToTiers: () => void;
   selectedTier?: string;
-  onBookItem?: (item: BookingItem) => void;
-  bookedItems?: string[];
   apiResponse?: ItineraryApiResponse; // New prop for API response
 }
 
@@ -106,8 +85,6 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   onBackToChat,
   onProceedToTiers,
   selectedTier,
-  onBookItem,
-  bookedItems = [],
   apiResponse
 }) => {
   const [viewMode, setViewMode] = useState<'overview' | 'itinerary' | 'media'>('overview');
@@ -116,9 +93,35 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
 
   // Transform API response if available
   const transformedData = apiResponse ? transformItineraryResponse(apiResponse) : null;
+  
+  // Map tier names correctly (UI uses economy/premium/luxury, API uses budgeted/premium/luxury)
+  const tierMapping: Record<TierType, string> = {
+    'economy': 'budgeted',
+    'premium': 'premium', 
+    'luxury': 'luxury'
+  };
+  
   const currentTier = selectedTier as TierType || 'economy';
-  const currentTierData = transformedData?.itineraries[currentTier];
-  const costBreakdown = currentTierData ? getCostBreakdown(transformedData!.rawResponse.generatedItinerary[currentTier]) : null;
+  const apiTierName = tierMapping[currentTier];
+  // Extract day-wise itinerary from API response
+  const rawTierData = (transformedData?.rawResponse?.generatedItinerary as any)?.[apiTierName] || 
+                      (transformedData?.rawResponse?.generatedItinerary as any)?.['budgeted'] || 
+                      Object.values(transformedData?.rawResponse?.generatedItinerary || {})[0];
+  
+  const dayWiseItinerary = rawTierData?.days || [];
+  const upsellOptions = rawTierData?.upsell || [];
+  
+  // Handle cost breakdown with proper fallbacks
+  let costBreakdown = null;
+  if (transformedData?.rawResponse?.generatedItinerary) {
+    const tierData = (transformedData.rawResponse.generatedItinerary as any)[apiTierName] || 
+                    (transformedData.rawResponse.generatedItinerary as any)['budgeted'] || 
+                    Object.values(transformedData.rawResponse.generatedItinerary)[0];
+    costBreakdown = getCostBreakdown(tierData);
+  } else {
+    // Fallback cost breakdown when no data is available
+    costBreakdown = getCostBreakdown(undefined);
+  }
 
   // Mock media data based on destination
   const mediaItems: MediaItem[] = [
@@ -169,6 +172,19 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
     }
   ];
 
+  // Helper function to count items by type from day-wise schedule AND upsell options
+  const getItemCountByType = (type: string): number => {
+    // Count from day-wise schedule
+    const scheduleCount = dayWiseItinerary.reduce((count: number, day: any) => {
+      return count + day.schedule.filter((item: any) => item.type === type).length;
+    }, 0);
+    
+    // Count from upsell options
+    const upsellCount = upsellOptions.filter((option: any) => option.type === type).length;
+    
+    return scheduleCount + upsellCount;
+  };
+
   // Generate booking categories from API data
   const bookingCategories: BookingCategory[] = [
     {
@@ -176,8 +192,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       name: 'Flights',
       icon: <Plane className="w-5 h-5" />,
       description: 'Direct flights and connections',
-      itemCount: currentTierData?.bookings.filter(b => b.category === 'flights').length || 0,
-      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.flights)}` : '$450 - $2,200',
+      itemCount: getItemCountByType('flight'),
+      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.flights)}` : '₹37,000 - ₹1,80,000',
       image: 'https://images.unsplash.com/photo-1556388158-158dc78cd3f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhaXJwbGFuZSUyMGZsaWdodHxlbnwxfHx8fDE3NTcxNTMzMzN8MA&ixlib=rb-4.1.0&q=80&w=1080',
       color: 'bg-blue-500'
     },
@@ -186,18 +202,18 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       name: 'Hotels',
       icon: <Hotel className="w-5 h-5" />,
       description: 'From boutique to luxury stays',
-      itemCount: currentTierData?.bookings.filter(b => b.category === 'hotels').length || 0,
-      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.hotels)}` : '$120 - $800',
+      itemCount: getItemCountByType('hotel'),
+      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.hotels)}` : '₹10,000 - ₹65,000',
       image: 'https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGJvb2tpbmclMjB0cmF2ZWx8ZW58MXx8fHwxNzU3MTUzMzMzfDA&ixlib=rb-4.1.0&q=80&w=1080',
       color: 'bg-green-500'
     },
     {
       id: 'activities',
       name: 'Activities',
-      icon: <Star className="w-5 h-5" />,
+      icon: <span className="text-lg">🎯</span>,
       description: 'Tours, attractions & experiences',
-      itemCount: currentTierData?.bookings.filter(b => b.category === 'activities').length || 0,
-      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.activities)}` : '$35 - $350',
+      itemCount: getItemCountByType('activity'),
+      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.activities)}` : '₹3,000 - ₹28,000',
       image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlaWZmZWwlMjB0b3dlciUyMHBhcmlzfGVufDF8fHwxNzU3MTUzMzMzfDA&ixlib=rb-4.1.0&q=80&w=1080',
       color: 'bg-orange-500'
     },
@@ -206,8 +222,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       name: 'Dining',
       icon: <Utensils className="w-5 h-5" />,
       description: 'Restaurants & culinary experiences',
-      itemCount: currentTierData?.bookings.filter(b => b.category === 'dining').length || 0,
-      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.meals)}` : '$45 - $300',
+      itemCount: getItemCountByType('meal'),
+      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.meals)}` : '₹3,700 - ₹25,000',
       image: 'https://images.unsplash.com/photo-1621327017866-6fb07e6c96ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGZyZW5jaCUyMGZvb2QlMjBkaW5pbmd8ZW58MXx8fHwxNzU3MTU0MDc5fDA&ixlib=rb-4.1.0&q=80&w=1080',
       color: 'bg-purple-500'
     }
@@ -245,7 +261,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
               </div>
               <div className="flex items-center space-x-1">
                 <MapPin className="w-4 h-4" />
-                <span>{currentTierData?.items.length || itinerary.length} activities planned</span>
+                <span>{dayWiseItinerary.length || itinerary.length} days planned</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Users className="w-4 h-4" />
@@ -270,13 +286,13 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="text-center">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{currentTierData?.items.length || itinerary.length}</div>
-            <p className="text-sm text-muted-foreground">Activities</p>
+            <div className="text-2xl font-bold text-primary">{dayWiseItinerary.length || itinerary.length}</div>
+            <p className="text-sm text-muted-foreground">Days</p>
           </CardContent>
         </Card>
         <Card className="text-center">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{currentTierData?.overview.duration || '7 days'}</div>
+            <div className="text-2xl font-bold text-primary">{rawTierData?.overview?.duration || '7 days'}</div>
             <p className="text-sm text-muted-foreground">Duration</p>
           </CardContent>
         </Card>
@@ -296,41 +312,43 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
         </Card>
       </div>
 
-      {/* Cost Breakdown */}
+      {/* Ultra Compact Cost Breakdown */}
       {costBreakdown && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <DollarSign className="w-5 h-5" />
-              <span>Cost Breakdown - {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} Tier</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="text-center">
-                <div className="text-lg font-semibold text-blue-600">{getFormattedPrice(costBreakdown.flights)}</div>
-                <p className="text-sm text-muted-foreground">Flights</p>
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="w-4 h-4 text-gray-600" />
+                <span className="font-medium text-gray-900">Cost Breakdown</span>
               </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-green-600">{getFormattedPrice(costBreakdown.hotels)}</div>
-                <p className="text-sm text-muted-foreground">Hotels</p>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-orange-600">{getFormattedPrice(costBreakdown.activities)}</div>
-                <p className="text-sm text-muted-foreground">Activities</p>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-purple-600">{getFormattedPrice(costBreakdown.meals)}</div>
-                <p className="text-sm text-muted-foreground">Meals</p>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-gray-600">{getFormattedPrice(costBreakdown.commute)}</div>
-                <p className="text-sm text-muted-foreground">Transport</p>
-              </div>
+              <span className="text-lg font-bold text-gray-900">{getFormattedPrice(costBreakdown.total)}</span>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'flights', label: 'Flights', icon: '✈️', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+                { key: 'hotels', label: 'Hotels', icon: '🏨', color: 'bg-green-100 text-green-700 border-green-200' },
+                { key: 'activities', label: 'Activities', icon: '🎯', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+                { key: 'meals', label: 'Meals', icon: '🍽️', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+                { key: 'commute', label: 'Transport', icon: '🚗', color: 'bg-gray-100 text-gray-700 border-gray-200' }
+              ].map((category) => {
+                const amount = costBreakdown[category.key as keyof typeof costBreakdown];
+                const percentage = costBreakdown.total > 0 ? (amount / costBreakdown.total) * 100 : 0;
+                
+                return (
+                  <div key={category.key} className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${category.color} text-xs font-medium`}>
+                    <span>{category.icon}</span>
+                    <span>{category.label}</span>
+                    <span className="font-semibold">{getFormattedPrice(amount)}</span>
+                    <span className="opacity-75">({percentage.toFixed(0)}%)</span>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
       )}
+      
 
       {/* Booking Categories Preview */}
       <div>
@@ -490,19 +508,21 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   if (selectedBookingCategory) {
     console.log('Rendering DetailedBookingView for:', selectedBookingCategory);
     return (
-      <DetailedBookingView
-        category={selectedBookingCategory as 'flights' | 'hotels' | 'activities' | 'dining'}
-        selectedTier={selectedTier || 'economy'}
-        destination={destination}
-        onBookItem={onBookItem || (() => {})}
-        bookedItems={bookedItems}
-        onBack={() => setSelectedBookingCategory(null)}
-      />
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <DetailedBookingView
+          category={selectedBookingCategory as 'flights' | 'hotels' | 'activities' | 'dining'}
+          selectedTier={(selectedTier || 'economy') as TierType}
+          destination={destination}
+          onBack={() => setSelectedBookingCategory(null)}
+          dayWiseData={dayWiseItinerary}
+          upsellOptions={upsellOptions}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       {/* Debug info */}
       {selectedBookingCategory && (
         <div className="bg-blue-100 p-4 rounded-lg">
@@ -551,8 +571,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
             </div>
             
             <Button onClick={onProceedToTiers}>
-              <ShoppingCart className="w-4 h-4 mr-1" />
-              Choose Experience Level
+              <Settings className="w-4 h-4 mr-1" />
+              Choose a Plan
             </Button>
           </div>
         </CardContent>
@@ -568,6 +588,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
           dates={dates}
           onEditItem={onEditItem}
           onDeleteItem={onDeleteItem}
+          dayWiseData={dayWiseItinerary}
+          upsellOptions={upsellOptions}
         />
       )}
     </div>

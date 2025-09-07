@@ -8,7 +8,7 @@ export const useAppState = () => {
   const [destination, setDestination] = useState('');
   const [dates, setDates] = useState('');
   const [activeTab, setActiveTab] = useState('voice');
-  const [selectedTier, setSelectedTier] = useState<TierType | null>(null);
+  const [selectedTier, setSelectedTier] = useState<TierType | null>('economy');
   const [currentStep, setCurrentStep] = useState<StepType>('planning');
   const [bookedItems, setBookedItems] = useState<string[]>([]);
   const [totalEstimate, setTotalEstimate] = useState<BudgetEstimate>({

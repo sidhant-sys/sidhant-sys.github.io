@@ -134,7 +134,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
     { id: 'all', name: 'All', icon: <ShoppingCart className="w-4 h-4" /> },
     { id: 'flight', name: 'Flights', icon: <Plane className="w-4 h-4" /> },
     { id: 'hotel', name: 'Hotels', icon: <Hotel className="w-4 h-4" /> },
-    { id: 'activity', name: 'Activities', icon: <Star className="w-4 h-4" /> },
+    { id: 'activity', name: 'Activities', icon: <span className="text-sm">🎯</span> },
     { id: 'restaurant', name: 'Dining', icon: <Utensils className="w-4 h-4" /> },
   ];
 
@@ -157,7 +157,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
       case 'hotel':
         return <Hotel className="w-4 h-4" />;
       case 'activity':
-        return <Star className="w-4 h-4" />;
+        return <span className="text-sm">🎯</span>;
       case 'restaurant':
         return <Utensils className="w-4 h-4" />;
       case 'transport':

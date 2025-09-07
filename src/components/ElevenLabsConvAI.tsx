@@ -80,6 +80,24 @@ export const ElevenLabsConvAI: React.FC<ElevenLabsConvAIProps> = ({
     return () => window.removeEventListener('message', handleMessage);
   }, [onVoiceInput]);
 
+  // Function to close ElevenLabs widget
+  const closeElevenLabsWidget = () => {
+    const existingWidget = document.querySelector('elevenlabs-convai');
+    if (existingWidget) {
+      existingWidget.remove();
+      setIsWidgetOpen(false);
+      console.log('ElevenLabs widget closed');
+    }
+  };
+
+  // Expose the close function globally so other components can use it
+  useEffect(() => {
+    (window as any).closeElevenLabsWidget = closeElevenLabsWidget;
+    return () => {
+      delete (window as any).closeElevenLabsWidget;
+    };
+  }, []);
+
   const handleToggleListening = () => {
     // Create and trigger ElevenLabs widget
     const createAndTriggerWidget = () => {
@@ -164,7 +182,7 @@ export const ElevenLabsConvAI: React.FC<ElevenLabsConvAIProps> = ({
       </div>
 
       {/* Quick Voice Prompts */}
-      <div className="flex flex-wrap gap-2 justify-center max-w-md">
+      {/* <div className="flex flex-wrap gap-2 justify-center max-w-md">
         {[
           "Plan a weekend in Paris",
           "I want to visit Japan",
@@ -180,11 +198,11 @@ export const ElevenLabsConvAI: React.FC<ElevenLabsConvAIProps> = ({
               simulateVoiceResponse();
             }}
             className="text-xs"
-          >
+      >
             "{prompt}"
           </Button>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 };

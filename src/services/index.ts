@@ -2,6 +2,10 @@
 export { apiClient, HttpClient } from './apiClient';
 export { UtilityApiService } from './utilityApi';
 
+// Export Supabase services
+export { supabase, typedSupabase } from './supabaseClient';
+export { supabaseService, SupabaseService } from './supabaseService';
+
 // Re-export types
 export type { 
   ApiResponse, 
