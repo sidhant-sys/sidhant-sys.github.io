@@ -168,7 +168,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({
               </div>
               
               {/* Right side - Itinerary Display and Tracking */}
-              <div className="space-y-6">
+              <div>
                 <div className=" bg-white">
                   <ItineraryDisplay
                     itinerary={itinerary}

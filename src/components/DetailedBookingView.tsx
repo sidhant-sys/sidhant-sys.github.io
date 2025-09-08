@@ -58,7 +58,10 @@ interface DayScheduleItem {
   check_in?: string;
   start_time?: string;
   end_time?: string;
-  location?: string;
+  location?: string | {
+    longitude: number;
+    latitude: number;
+  };
   amenities?: string[];
 }
 
@@ -68,10 +71,12 @@ interface DayWiseData {
 }
 
 interface UpsellOption {
-  type: 'flight' | 'hotel' | 'activity';
-  name: string;
-  upgrade_cost: number;
-  benefits: string[];
+  upsell_type: 'flight' | 'hotel' | 'activity';
+  upsell_name: string;
+  upsell_price: number;
+  upsell_benefits: string[];
+  upsell_description?: string;
+  upsell_link?: string;
 }
 
 interface DetailedBookingViewProps {
@@ -116,7 +121,11 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
                   (scheduleItem.airline && `${scheduleItem.airline} Flight`) ||
                   (scheduleItem.from && scheduleItem.to && `${scheduleItem.from} to ${scheduleItem.to}`) ||
                   `${scheduleItem.type.charAt(0).toUpperCase() + scheduleItem.type.slice(1)}`,
-            location: scheduleItem.location || scheduleItem.to || scheduleItem.from,
+            location: typeof scheduleItem.location === 'string' 
+              ? scheduleItem.location 
+              : scheduleItem.location 
+                ? `${scheduleItem.location.latitude}, ${scheduleItem.location.longitude}`
+                : scheduleItem.to || scheduleItem.from,
             price: scheduleItem.price,
             available: true,
             tier: [selectedTier],
@@ -142,7 +151,11 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
             // Meal-specific fields
             ...(scheduleItem.type === 'meal' && {
               description: scheduleItem.description,
-              location: scheduleItem.location,
+              location: typeof scheduleItem.location === 'string' 
+                ? scheduleItem.location 
+                : scheduleItem.location 
+                  ? `${scheduleItem.location.latitude}, ${scheduleItem.location.longitude}`
+                  : undefined,
             })
           };
           
@@ -152,17 +165,17 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
     
     // 2. Add upsell options of the target type
     upsellOptions
-      .filter(option => option.type === targetType)
+      .filter(option => option.upsell_type === targetType)
       .forEach((upsellItem, index) => {
         const bookingItem: BookingItem = {
           id: `upsell-${targetType}-${index}`,
-          type: upsellItem.type as 'flight' | 'hotel' | 'activity' | 'restaurant',
-          name: upsellItem.name,
-          price: upsellItem.upgrade_cost,
-          features: upsellItem.benefits,
+          type: upsellItem.upsell_type as 'flight' | 'hotel' | 'activity' | 'restaurant',
+          name: upsellItem.upsell_name,
+          price: upsellItem.upsell_price,
+          features: upsellItem.upsell_benefits,
           available: true,
           tier: [selectedTier],
-          description: `Upgrade option: ${upsellItem.benefits.join(', ')}`
+          description: `Upgrade option: ${upsellItem.upsell_benefits.join(', ')}`
         };
         
         allItems.push(bookingItem);
