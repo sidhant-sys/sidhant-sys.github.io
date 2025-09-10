@@ -40,8 +40,8 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
       icon: <Plane className="w-5 h-5" />,
       tagline: 'Budget-friendly essentials',
       priceRange: '₹₹ - ₹₹₹₹',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50 border-blue-200',
+      color: 'text-primary',
+      bgColor: 'bg-card border-border hover:border-primary/30',
       features: [
         'Budget accommodations (3-star hotels)',
         'Economy flights & transport',
@@ -58,8 +58,8 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
       tagline: 'Enhanced comfort & experiences',
       priceRange: '₹₹₹ - ₹₹₹₹₹',
       popular: true,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50 border-purple-200',
+      color: 'text-primary',
+      bgColor: 'bg-card border-border hover:border-primary/30',
       features: [
         'Premium accommodations (4-star hotels)',
         'Business class flights available',
@@ -75,8 +75,8 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
       icon: <Crown className="w-5 h-5" />,
       tagline: 'Ultimate premium experience',
       priceRange: '₹₹₹₹₹ - ₹₹₹₹₹₹',
-      color: 'text-gold-600',
-      bgColor: 'bg-amber-50 border-amber-200',
+      color: 'text-primary',
+      bgColor: 'bg-card border-border hover:border-primary/30',
       features: [
         'Luxury accommodations (5-star hotels)',
         'First class flights & private jets',
@@ -97,51 +97,57 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold flex items-center justify-center space-x-2">
-          <Zap className="w-6 h-6 text-orange-500" />
-          <span>Choose Your Travel Style</span>
-        </h2>
-        <p className="text-muted-foreground">
+    <div className="space-y-8">
+      <div className="text-center space-y-3">
+        <div className="flex items-center justify-center space-x-3">
+          <div className="p-2 bg-primary/10 rounded-full">
+            <Zap className="w-6 h-6 text-primary" />
+          </div>
+          <h2 className="text-3xl font-semibold text-foreground">
+            Choose Your Travel Style
+          </h2>
+        </div>
+        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
           Select the experience level that matches your preferences and budget
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-3 gap-6">
         {tiers.map((tier) => (
           <Card
             key={tier.id}
-            className={`relative cursor-pointer transition-all duration-200 hover:shadow-lg ${
+            className={`relative cursor-pointer transition-all duration-300 shadow-professional hover:shadow-professional-lg transform hover:scale-[1.02] ${
               selectedTier === tier.id
-                ? `ring-2 ring-offset-2 ${tier.bgColor.replace('bg-', 'ring-').replace('-50', '-300')}`
-                : 'hover:shadow-md'
+                ? 'ring-2 ring-primary ring-offset-2 border-primary'
+                : ''
             } ${tier.bgColor}`}
             onClick={() => onTierSelect(tier.id)}
           >
             {tier.popular && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-orange-500 text-white px-3 py-1">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
                   Most Popular
                 </Badge>
               </div>
             )}
             
-            <CardHeader className="text-center pb-3">
-              <div className={`w-12 h-12 mx-auto rounded-full ${tier.bgColor.replace('-50', '-100')} flex items-center justify-center ${tier.color} mb-2`}>
+            <CardHeader className="text-center pb-4">
+              <div className={`w-14 h-14 mx-auto rounded-full bg-primary/10 flex items-center justify-center ${tier.color} mb-3 transition-colors duration-300 ${
+                selectedTier === tier.id ? 'bg-primary/20' : ''
+              }`}>
                 {tier.icon}
               </div>
-              <CardTitle className="flex items-center justify-center space-x-2">
+              <CardTitle className="flex items-center justify-center space-x-2 text-xl">
                 <span>{tier.name}</span>
                 {selectedTier === tier.id && (
-                  <Check className="w-5 h-5 text-green-600" />
+                  <Check className="w-5 h-5 text-success animate-in slide-in-from-right duration-200" />
                 )}
               </CardTitle>
-              <p className="text-sm text-muted-foreground">{tier.tagline}</p>
+              <p className="text-muted-foreground">{tier.tagline}</p>
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">{tier.priceRange}</p>
+                <p className="text-sm text-muted-foreground font-medium">{tier.priceRange}</p>
                 {totalEstimate && (
-                  <p className={`font-semibold ${tier.color}`}>
+                  <p className="font-semibold text-primary text-lg">
                     {formatPrice(totalEstimate[tier.id])} estimated
                   </p>
                 )}
@@ -149,28 +155,32 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
             </CardHeader>
 
             <CardContent className="pt-0">
-              <ul className="space-y-2">
+              <ul className="space-y-3 mb-6">
                 {tier.features.map((feature, index) => (
-                  <li key={index} className="flex items-start space-x-2 text-sm">
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>{feature}</span>
+                  <li key={index} className="flex items-start space-x-3 text-sm">
+                    <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                    <span className="text-card-foreground">{feature}</span>
                   </li>
                 ))}
               </ul>
               
               <Button
-                className={`w-full mt-4 ${
-                  selectedTier === tier.id
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : ''
-                }`}
+                className="w-full"
                 variant={selectedTier === tier.id ? 'default' : 'outline'}
+                size="lg"
                 onClick={(e) => {
                   e.stopPropagation();
                   onTierSelect(tier.id);
                 }}
               >
-                {selectedTier === tier.id ? 'Selected' : 'Select ' + tier.name}
+                {selectedTier === tier.id ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Selected
+                  </>
+                ) : (
+                  `Select ${tier.name}`
+                )}
               </Button>
             </CardContent>
           </Card>
@@ -178,15 +188,17 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
       </div>
 
       {selectedTier && (
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2 text-green-800">
-              <Check className="w-5 h-5" />
-              <span className="font-medium">
+        <Card className="bg-success/5 border-success/20 shadow-professional">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3 text-success">
+              <div className="p-1 bg-success/20 rounded-full">
+                <Check className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-lg">
                 {tiers.find(t => t.id === selectedTier)?.name} tier selected!
               </span>
             </div>
-            <p className="text-sm text-green-700 mt-1">
+            <p className="text-muted-foreground mt-2 text-balance">
               Your itinerary will be customized with {selectedTier} level accommodations, 
               activities, and experiences. Proceed to see detailed bookings.
             </p>

@@ -35,6 +35,11 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
   const [error, setError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [isGeneratingItinerary, setIsGeneratingItinerary] = useState(false);
+  const [loaderStartTime, setLoaderStartTime] = useState<number | null>(null);
+  
+  // Add ref to prevent accidental state resets
+  const isGeneratingRef = useRef(false);
+  const loaderStartTimeRef = useRef<number | null>(null);
   const [hasGeneratedItinerary, setHasGeneratedItinerary] = useState(false);
   const [isApiPolling, setIsApiPolling] = useState(false);
   
@@ -45,7 +50,6 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
     if (apiPollingRef.current) {
       clearInterval(apiPollingRef.current);
       apiPollingRef.current = null;
-      console.log('Stopped API polling');
     }
     setIsApiPolling(false);
   }, []);
@@ -54,59 +58,72 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
     // Clear any existing polling
     stopApiPolling();
     
-    console.log('🚀 Starting API polling for tracking_id:', trackingId);
     setIsApiPolling(true);
     
     const makeApiCall = async () => {
       try {
-        console.log('🔄 Making API call...');
         const apiResponse = await getItineraryByTrackingId(trackingId);
         
         if (!apiResponse.success) {
-          console.log('❌ API call failed:', apiResponse.error);
           return; // Continue polling
         }
         
         // Check if API explicitly returned isEmpty flag (empty array case)
         if (apiResponse.isEmpty) {
-          console.log('📭 API returned empty array - data not ready yet');
           return; // Continue polling
         }
         
         // Check if response data is null/undefined
         const data = apiResponse.data;
         if (!data) {
-          console.log('📭 API returned null/undefined data');
           return; // Continue polling
         }
         
         // We have valid data - stop polling and process it
-        console.log('✅ API returned valid data - stopping polling');
         stopApiPolling();
+        
+        // BULLETPROOF: Enforce minimum 5-second display time
+        const minDisplayTime = 5000; // 5 seconds minimum
+        const currentTime = Date.now();
+        const startTime = loaderStartTimeRef.current || loaderStartTime;
+        const elapsedTime = startTime ? currentTime - startTime : 0;
+        const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
+        
+        // Safety check: Only proceed if we're actually in generating state
+        if (!isGeneratingRef.current) {
+          return;
+        }
         
         if (onItineraryGenerated) {
           onItineraryGenerated(data);
         }
         
         setHasGeneratedItinerary(true);
-        setIsGeneratingItinerary(false);
+        
+        // Hide loader after minimum display time
+        setTimeout(() => {
+          setIsGeneratingItinerary(false);
+          isGeneratingRef.current = false;
+          setLoaderStartTime(null);
+          loaderStartTimeRef.current = null;
+        }, remainingTime);
         
       } catch (err) {
-        console.error('💥 Error in API call:', err);
         // Continue polling on error
       }
     };
     
-    // Make first call immediately
-    makeApiCall();
-    
-    // Set up interval for subsequent calls
-    apiPollingRef.current = setInterval(() => {
-      console.log('⏰ 10 seconds passed - making next API call');
+    // Wait a moment before first call to ensure loader is properly visible
+    setTimeout(() => {
       makeApiCall();
-    }, 10000);
+    }, 2000);
     
-    console.log('📅 Polling interval started');
+    // Set up interval for subsequent calls (starting after initial delay)
+    setTimeout(() => {
+      apiPollingRef.current = setInterval(() => {
+        makeApiCall();
+      }, 10000);
+    }, 2000);
     
   }, [onItineraryGenerated, stopApiPolling]);
 
@@ -126,7 +143,6 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
         .single();
 
       if (fetchError) {
-        console.error('Error fetching tracking entry:', fetchError);
         setError(fetchError.message);
         return;
       }
@@ -136,33 +152,30 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
         
         // Check if tracking_id has changed
         if (previousTrackingId !== null && currentTrackingId !== previousTrackingId) {
-          console.log('🎯 NEW TRACKING ID DETECTED!', {
-            previous: previousTrackingId,
-            current: currentTrackingId
-          });
           
           // First, close ElevenLabs widget if it exists
           if ((window as any).closeElevenLabsWidget) {
             (window as any).closeElevenLabsWidget();
-            console.log('Closing ElevenLabs widget before showing loading screen');
           }
           
           setNewTrackingId(currentTrackingId);
           setShowSuccessMessage(true);
           
           // STEP 1: Stop database polling
-          console.log('🚫 STEP 1: Stopping database polling');
           stopPolling();
           
           // STEP 2: Start showing loading screen immediately
-          console.log('📺 STEP 2: Starting loading screen');
           setIsGeneratingItinerary(true);
+          isGeneratingRef.current = true;
+          const startTime = Date.now();
+          setLoaderStartTime(startTime);
+          loaderStartTimeRef.current = startTime;
+          
           if (onItineraryGenerationStart) {
             onItineraryGenerationStart();
           }
           
           // STEP 3: Start API polling for itinerary data
-          console.log('🚀 STEP 3: Starting API polling for itinerary data');
           startItineraryPolling(currentTrackingId);
           
           // Auto-hide success message after 5 seconds
@@ -176,7 +189,6 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
         setPreviousTrackingId(currentTrackingId);
       }
     } catch (err) {
-      console.error('Error in fetchEntries:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
@@ -189,14 +201,12 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
     }
 
     setIsPolling(true);
-    console.log('📊 Starting DATABASE polling for tracking_id changes...');
     
     // Fetch immediately
     fetchEntries();
     
     // Then poll at intervals (every 2 seconds)
     intervalRef.current = setInterval(fetchEntries, interval);
-    console.log('📊 Database polling interval set for every', interval, 'ms');
   }, [fetchEntries, interval]);
 
   const stopPolling = useCallback(() => {
@@ -205,7 +215,6 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
       intervalRef.current = null;
     }
     setIsPolling(false);
-    console.log('🚫 Stopped database tracking polling');
   }, []);
 
   const clearEntry = useCallback(() => {
@@ -222,13 +231,10 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
   // Auto-start/stop DATABASE polling based on enabled prop
   useEffect(() => {
     if (enabled && !hasGeneratedItinerary && !isApiPolling) {
-      console.log('📊 Starting database polling for tracking_id changes');
       startPolling();
     } else if (isApiPolling) {
-      console.log('📊 API polling active - keeping database polling stopped');
       stopPolling();
     } else if (hasGeneratedItinerary) {
-      console.log('📊 Itinerary generated - stopping database polling');
       stopPolling();
     }
 

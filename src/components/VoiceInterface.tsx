@@ -68,7 +68,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
           <p className="text-primary animate-pulse">Listening... Speak now</p>
         )}
         {isPlaying && (
-          <div className="flex items-center justify-center space-x-2 text-green-600">
+          <div className="flex items-center justify-center space-x-2 text-success">
             <Volume2 className="w-4 h-4 animate-pulse" />
             <span>AI is responding...</span>
           </div>

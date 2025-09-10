@@ -29,7 +29,6 @@ export const useBooking = (options: UseBookingOptions = {}) => {
     setBookingError(null);
 
     try {
-      console.log('Starting booking process...', { itineraryId, classType });
 
       // Map tier types to API class types
       const classTypeMapping: Record<TierType, BookingRequest['classType']> = {
@@ -49,14 +48,12 @@ export const useBooking = (options: UseBookingOptions = {}) => {
         throw new Error(response.error || 'Booking failed');
       }
 
-      console.log('Booking successful:', response.data);
       setLastBooking(response.data);
       onBookingSuccess?.(response.data);
       
       return response.data;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      console.error('Booking failed:', error);
       setBookingError(errorMessage);
       onBookingError?.(errorMessage);
       return null;

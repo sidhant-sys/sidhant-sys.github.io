@@ -6,7 +6,8 @@ import { EnhancedItineraryView } from './EnhancedItineraryView';
 import { TierSelector } from './TierSelector';
 import { BookingInterface } from './BookingInterface';
 // Removed TrackingEntriesDisplay import - using hook directly
-import { ItineraryLoadingScreen } from './ItineraryLoadingScreen';
+import { SimpleLoader } from './SimpleLoader';
+import { useSimpleLoader } from '../hooks/useSimpleLoader';
 import { useTrackingPolling } from '../hooks/useTrackingPolling';
 import { useBooking } from '../hooks/useBooking';
 import { Button } from './ui/button';
@@ -70,28 +71,30 @@ const StepRenderer: React.FC<StepRendererProps> = ({
   getCurrentBudget,
   apiResponse
 }) => {
-  const [generatedItineraryData, setGeneratedItineraryData] = React.useState<any>(null); // TODO: Use this data to populate itinerary
+  const [generatedItineraryData, setGeneratedItineraryData] = React.useState<any>(null);
   const [showTierSelection, setShowTierSelection] = React.useState(false);
-  console.log('Generated itinerary data:', generatedItineraryData); // Debug log
+
+  // Use the new simple loader
+  const { isVisible: isLoaderVisible, showLoader, hideLoader } = useSimpleLoader({
+    minDuration: 5000 // 5 seconds minimum
+  });
 
   const handleItineraryGenerated = React.useCallback((data: any) => {
-    console.log('Itinerary generated:', data);
     setGeneratedItineraryData(data);
-    // Switch to full itinerary view
-    // You might want to add a prop to handle this
-  }, []);
+    // Hide loader when we get real data
+    hideLoader();
+  }, [hideLoader]);
 
   const handleItineraryGenerationStart = React.useCallback(() => {
-    console.log('Starting itinerary generation...');
-  }, []);
+    // Show loader immediately
+    showLoader();
+  }, [showLoader]);
 
   const handleProceedToTiers = React.useCallback(() => {
-    console.log('Proceeding to tier selection...');
     setShowTierSelection(true);
   }, []);
 
   const handleTierSelect = React.useCallback((tier: TierType) => {
-    console.log('Tier selected:', tier);
     onTierSelect(tier);
     setShowTierSelection(false);
   }, [onTierSelect]);
@@ -100,21 +103,21 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     setShowTierSelection(false);
   }, []);
 
-  // Use the hook directly to get the loading state
-  const { isGeneratingItinerary } = useTrackingPolling({
+  // Use the tracking polling hook (but ignore its loader state)
+  const { } = useTrackingPolling({
     enabled: true,
     onItineraryGenerated: handleItineraryGenerated,
     onItineraryGenerationStart: handleItineraryGenerationStart
   });
 
+
   // Booking functionality
   const { isBooking, bookingError, lastBooking, handleBooking, resetBookingState } = useBooking({
     onBookingSuccess: (booking) => {
-      console.log('Booking successful:', booking);
       alert(`Booking successful! Reference: ${booking.bookingReference || booking.id}`);
     },
     onBookingError: (error) => {
-      console.error('Booking failed:', error);
+      alert(`Booking failed: ${error}`);
     }
   });
 
@@ -140,7 +143,6 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                   <div className="flex border-b border-gray-200 mb-6">
                     <button
                       onClick={() => {
-                        console.log('Voice tab clicked');
                         onActiveTabChange('voice');
                       }}
                       className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
@@ -153,7 +155,6 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                     </button>
                     <button
                       onClick={() => {
-                        console.log('Chat tab clicked');
                         onActiveTabChange('chat');
                       }}
                       className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
@@ -285,17 +286,17 @@ const StepRenderer: React.FC<StepRendererProps> = ({
               
               {/* Booking error display */}
               {bookingError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center space-x-2 text-red-800">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                  <div className="flex items-center space-x-2 text-destructive">
                     <XCircle className="w-5 h-5" />
                     <span className="font-medium">Booking Failed</span>
                   </div>
-                  <p className="text-red-700 mt-1">{bookingError}</p>
+                  <p className="text-destructive mt-1">{bookingError}</p>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={resetBookingState}
-                    className="mt-2 text-red-700 border-red-300 hover:bg-red-50"
+                    className="mt-2 text-destructive border-destructive/30 hover:bg-destructive/10"
                   >
                     Try Again
                   </Button>
@@ -304,12 +305,12 @@ const StepRenderer: React.FC<StepRendererProps> = ({
 
               {/* Success message */}
               {lastBooking && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center space-x-2 text-green-800">
+                <div className="bg-success/10 border border-success/20 rounded-lg p-4 mb-4">
+                  <div className="flex items-center space-x-2 text-success">
                     <CheckCircle className="w-5 h-5" />
                     <span className="font-medium">Booking Successful!</span>
                   </div>
-                  <p className="text-green-700 mt-1">
+                  <p className="text-success mt-1">
                     Your booking has been confirmed. 
                     {lastBooking.bookingReference && (
                       <span className="font-medium"> Reference: {lastBooking.bookingReference}</span>
@@ -330,7 +331,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                   <Button 
                     onClick={onCompleteBooking}
                     disabled={isBooking || !generatedItineraryData?.id || !selectedTier}
-                    className={lastBooking ? 'bg-green-600 hover:bg-green-700' : ''}
+                    className={lastBooking ? 'bg-success hover:bg-success/90' : ''}
                   >
                     {isBooking ? (
                       <>
@@ -425,7 +426,10 @@ const StepRenderer: React.FC<StepRendererProps> = ({
   return (
     <>
       {renderCurrentStep()}
-      {isGeneratingItinerary && <ItineraryLoadingScreen />}
+      <SimpleLoader 
+        isVisible={isLoaderVisible}
+        minDuration={5000}
+      />
     </>
   );
 };

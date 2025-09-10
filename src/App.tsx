@@ -2,6 +2,7 @@ import { MainLayout } from './components/MainLayout';
 import StepRenderer from './components/StepRenderer';
 import { useAppState } from './hooks/useAppState';
 import { useAppLogic } from './hooks/useAppLogic';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 
 export default function App() {
   const appState = useAppState();
@@ -18,37 +19,39 @@ export default function App() {
   });
 
   return (
-    <MainLayout
-      currentStep={appState.currentStep}
-      itineraryLength={appState.itinerary.length}
-      layoutMode={appState.layoutMode}
-    >
-      <StepRenderer
+    <CurrencyProvider>
+      <MainLayout
         currentStep={appState.currentStep}
+        itineraryLength={appState.itinerary.length}
         layoutMode={appState.layoutMode}
-        activeTab={appState.activeTab}
-        isListening={appState.isListening}
-        messages={appState.messages}
-        itinerary={appState.itinerary}
-        selectedTier={appState.selectedTier}
-        totalEstimate={appState.totalEstimate}
-        userRequest={appState.userRequest}
-        bookedItems={appState.bookedItems}
-        destination={appState.destination}
-        dates={appState.dates}
-        onVoiceInput={appLogic.handleVoiceInput}
-        onToggleListening={appLogic.handleToggleListening}
-        onChatInput={appLogic.handleChatInput}
-        onTierSelect={appLogic.handleTierSelect}
-        onBookItem={appLogic.handleBookItem}
-        onBackToPlanning={appLogic.handleBackToPlanning}
-        onBackToChat={appLogic.handleBackToChat}
-        onEditItem={appLogic.handleEditItem}
-        onDeleteItem={appLogic.handleDeleteItem}
-        onActiveTabChange={appState.setActiveTab}
-        getCurrentBudget={appState.getCurrentBudget}
-        apiResponse={undefined}
-      />
-    </MainLayout>
+      >
+        <StepRenderer
+          currentStep={appState.currentStep}
+          layoutMode={appState.layoutMode}
+          activeTab={appState.activeTab}
+          isListening={appState.isListening}
+          messages={appState.messages}
+          itinerary={appState.itinerary}
+          selectedTier={appState.selectedTier}
+          totalEstimate={appState.totalEstimate}
+          userRequest={appState.userRequest}
+          bookedItems={appState.bookedItems}
+          destination={appState.destination}
+          dates={appState.dates}
+          onVoiceInput={appLogic.handleVoiceInput}
+          onToggleListening={appLogic.handleToggleListening}
+          onChatInput={appLogic.handleChatInput}
+          onTierSelect={appLogic.handleTierSelect}
+          onBookItem={appLogic.handleBookItem}
+          onBackToPlanning={appLogic.handleBackToPlanning}
+          onBackToChat={appLogic.handleBackToChat}
+          onEditItem={appLogic.handleEditItem}
+          onDeleteItem={appLogic.handleDeleteItem}
+          onActiveTabChange={appState.setActiveTab}
+          getCurrentBudget={appState.getCurrentBudget}
+          apiResponse={undefined}
+        />
+      </MainLayout>
+    </CurrencyProvider>
   );
 }

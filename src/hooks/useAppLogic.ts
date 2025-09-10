@@ -68,7 +68,6 @@ export const useAppLogic = ({
   }, []);
 
   const handleEditItem = useCallback((id: string) => {
-    console.log('Edit item:', id);
     // Implementation for editing itinerary items
   }, []);
 

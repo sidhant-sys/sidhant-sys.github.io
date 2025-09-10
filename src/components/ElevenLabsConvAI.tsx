@@ -86,7 +86,6 @@ export const ElevenLabsConvAI: React.FC<ElevenLabsConvAIProps> = ({
     if (existingWidget) {
       existingWidget.remove();
       setIsWidgetOpen(false);
-      console.log('ElevenLabs widget closed');
     }
   };
 
@@ -148,7 +147,7 @@ export const ElevenLabsConvAI: React.FC<ElevenLabsConvAIProps> = ({
       <div className="relative">
         <div className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 ${
           isWidgetOpen 
-            ? "bg-green-100 border-2 border-green-400" 
+            ? "bg-success/20 border-2 border-success" 
             : "bg-muted hover:bg-muted/80"
         }`}>
           <Button
@@ -156,12 +155,12 @@ export const ElevenLabsConvAI: React.FC<ElevenLabsConvAIProps> = ({
             variant="outline"
             className={`w-20 h-20 rounded-full ${
               isWidgetOpen 
-                ? "border-green-400 bg-green-50" 
+                ? "border-success bg-success/10" 
                 : ""
             }`}
             onClick={handleToggleListening}
           >
-            <Mic className={`w-8 h-8 ${isWidgetOpen ? "text-green-600" : ""}`} />
+            <Mic className={`w-8 h-8 ${isWidgetOpen ? "text-success" : ""}`} />
           </Button>
         </div>
       </div>
@@ -170,7 +169,7 @@ export const ElevenLabsConvAI: React.FC<ElevenLabsConvAIProps> = ({
       <div className="text-xs text-muted-foreground text-center max-w-md">
         {isWidgetOpen ? (
           <>
-            <p className="text-green-600 font-medium">✅ Chat popup is active</p>
+            <p className="text-success font-medium">✅ Chat popup is active</p>
             <p className="mt-1">Speak naturally to plan your perfect trip</p>
           </>
         ) : (

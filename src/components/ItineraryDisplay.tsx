@@ -147,10 +147,10 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
   // Booking functionality
   const { isBooking, bookingError, lastBooking, handleBooking, resetBookingState } = useBooking({
     onBookingSuccess: (booking) => {
-      console.log('Booking successful:', booking);
+      // Booking successful
     },
     onBookingError: (error) => {
-      console.error('Booking failed:', error);
+      // Booking failed
     }
   });
 
@@ -235,12 +235,9 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
   if (!hasApiData && itinerary.length === 0) {
     return (
       <div className="w-full border-rounded-lg shadow-none">
-        <div className="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden rounded-2xl p-4 border-rounded-lg">
-          {/* Simplified Background */}
-          <div className="absolute inset-0 overflow-hidden rounded-2xl">
-            <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-blue-200/30 to-purple-200/30 rounded-full animate-pulse"></div>
-            <div className="absolute bottom-4 left-1/4 w-16 h-16 bg-gradient-to-br from-indigo-200/30 to-blue-200/30 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-          </div>
+        <div className="relative bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden rounded-xl border border-border shadow-professional p-4">
+          {/* Professional Background Elements */}
+          
           
           <div className="relative px-6 py-12 text-center">
             {/* Compact Hero Section */}
@@ -253,55 +250,54 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
             <div className="space-y-6 max-w-4xl mx-auto">
               {/* Compact Hero Text */}
               <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                  AI-Powered Travel Planner
-                </h2>
-                <p className="text-gray-600">
+                {/* <div className="flex items-center justify-center space-x-3 mb-4">
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <Sparkles className="w-6 h-6 text-primary" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-foreground">
+                    Hermes
+                  </h2>
+                </div> */}
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                   Multi-tier budgets • Real-time pricing • Voice-first experience
                 </p>
-                <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+                <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
                   <Globe className="w-4 h-4" />
                   <span>Powered by Amadeus API</span>
                 </div>
               </div>
 
-              {/* Horizontal Feature Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto px-2">
+              {/* Professional Feature Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
                 {[
                   { 
-                    icon: <Target className="w-4 h-4" color='blue'/>, 
+                    icon: <Target className="w-5 h-5" />, 
                     label: "Smart Budgeting", 
-                    desc: "3-tier pricing options", 
-                    color: "from-green-400 to-emerald-500",
-                    bgColor: "from-green-50 to-emerald-50"
+                    desc: "3-tier pricing options"
                   },
                   { 
-                    icon: <Zap className="w-4 h-4" color='blue'/>, 
+                    icon: <Zap className="w-5 h-5" />, 
                     label: "Live Data", 
-                    desc: "Real-time prices & availability", 
-                    color: "from-yellow-400 to-orange-500",
-                    bgColor: "from-yellow-50 to-orange-50"
+                    desc: "Real-time prices & availability"
                   },
                   { 
-                    icon: <Users className="w-4 h-4" color='blue'/>, 
+                    icon: <Users className="w-5 h-5" />, 
                     label: "AI Personalized", 
-                    desc: "Smart recommendations", 
-                    color: "from-purple-400 to-pink-500",
-                    bgColor: "from-purple-50 to-pink-50"
+                    desc: "Smart recommendations"
                   }
                 ].map((feature, index) => (
                   <div 
                     key={index}
-                    className="group cursor-pointer transform hover:scale-105 transition-all duration-300 h-24"
+                    className="group cursor-pointer transform hover:scale-105 transition-all duration-300"
                   >
-                    <div className={`bg-gradient-to-br ${feature.bgColor} border border-white/50 rounded-xl p-4 hover:shadow-sm transition-shadow duration-300 h-full`}>
-                      <div className="flex items-center h-full">
-                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center text-white flex-shrink-0 px-3`}>
+                    <div className="bg-card border border-border rounded-lg p-6 hover:shadow-professional-lg transition-all duration-300">
+                      <div className="text-center space-y-3">
+                        <div className="w-12 h-12 mx-auto rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                           {feature.icon}
                         </div>
-                        <div className="text-left flex-1 ml-3">
-                          <h4 className="font-semibold text-gray-800 text-sm leading-tight">{feature.label}</h4>
-                          <p className="text-xs text-gray-600 leading-tight mt-1">{feature.desc}</p>
+                        <div>
+                          <h4 className="font-semibold text-foreground">{feature.label}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">{feature.desc}</p>
                         </div>
                       </div>
                     </div>
@@ -309,46 +305,48 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                 ))}
               </div>
 
-              {/* Compact Demo Section */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/60 shadow-sm px-4 py-2">
-                <div className="flex items-center justify-center space-x-2 mb-3">
-                  <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-700">Voice Input Example</span>
-                </div>
-                
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border-l-3 border-blue-400 mb-3">
-                  <p className="text-sm font-medium text-gray-800">
-                    "Plan a ₹50K entertainment trip to New York for 7 days"
-                  </p>
-                </div>
-                
-                <div className="flex items-center justify-center space-x-6 text-xs text-gray-500">
-                  <span className="flex items-center space-x-1">
-                    <ArrowRight className="w-3 h-3" />
-                    <span>Budgeted: ₹40K</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <ArrowRight className="w-3 h-3" />
-                    <span>Premium: ₹65K</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <ArrowRight className="w-3 h-3" />
-                    <span>Luxury: ₹90K</span>
-                  </span>
+              {/* Professional Demo Section */}
+              <div className="bg-card/80 backdrop-blur-sm rounded-lg p-6 border border-border shadow-sm max-w-3xl mx-auto">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center space-x-3 mb-4">
+                    <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
+                    <span className="font-medium text-foreground">Voice Input Example</span>
+                  </div>
+                  
+                  <div className="bg-primary/10 rounded-lg p-4 border-l-4 border-primary">
+                    <p className="font-medium text-foreground">
+                      "Plan a ₹50K entertainment trip to New York for 7 days"
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center justify-center space-x-8 text-sm text-muted-foreground">
+                    <span className="flex items-center space-x-2">
+                      <ArrowRight className="w-4 h-4" />
+                      <span>Budgeted: ₹40K</span>
+                    </span>
+                    <span className="flex items-center space-x-2">
+                      <ArrowRight className="w-4 h-4" />
+                      <span>Premium: ₹65K</span>
+                    </span>
+                    <span className="flex items-center space-x-2">
+                      <ArrowRight className="w-4 h-4" />
+                      <span>Luxury: ₹90K</span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Compact Call to Action */}
-              <div className="pt-2">
+              {/* Professional Call to Action */}
+              <div className="pt-4">
                 <div className="group">
-                  <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 cursor-pointer">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    <span className="font-medium">Start Planning Your Trip</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                  </div>
+                  <button className="inline-flex items-center bg-primary hover:bg-primary-hover text-primary-foreground px-8 py-4 rounded-lg shadow-professional hover:shadow-professional-lg transform hover:scale-105 transition-all duration-300 font-medium">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-3"></div>
+                    <span>Start Planning Your Trip</span>
+                    <ArrowRight className="w-5 h-5 ml-4 group-hover:translate-x-1 transition-transform duration-300" />
+                  </button>
                 </div>
                 
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-3">
                   Click the microphone icon to begin voice planning
                 </p>
               </div>
@@ -362,11 +360,11 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
   // Cost breakdown visualization component
   const CostBreakdownChart = ({ overview }: { overview: TierOverview }) => {
     const costItems = [
-      { key: 'flights', label: 'Flights', icon: <Plane className="w-4 h-4" />, color: 'bg-blue-500' },
-      { key: 'hotels', label: 'Hotels', icon: <MapPin className="w-4 h-4" />, color: 'bg-green-500' },
-      { key: 'activities', label: 'Activities', icon: <Star className="w-4 h-4" />, color: 'bg-purple-500' },
-      { key: 'meals', label: 'Meals', icon: <span className="text-sm">🍽️</span>, color: 'bg-orange-500' },
-      { key: 'commute', label: 'Transport', icon: <span className="text-sm">🚗</span>, color: 'bg-red-500' }
+      { key: 'flights', label: 'Flights', icon: <Plane className="w-4 h-4" />, color: 'bg-primary' },
+      { key: 'hotels', label: 'Hotels', icon: <MapPin className="w-4 h-4" />, color: 'bg-success' },
+      { key: 'activities', label: 'Activities', icon: <Star className="w-4 h-4" />, color: 'bg-primary/80' },
+      { key: 'meals', label: 'Meals', icon: <span className="text-sm">🍽️</span>, color: 'bg-warning' },
+      { key: 'commute', label: 'Transport', icon: <span className="text-sm">🚗</span>, color: 'bg-primary/60' }
     ];
 
     const maxValue = Math.max(...Object.values(overview.cost_breakdown));
@@ -451,7 +449,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
               <CardTitle className="flex items-center space-x-2">
               <DollarSign className="w-5 h-5 text-green-600" />
               <span>Cost Breakdown</span>
-              <Badge className="bg-green-100 text-green-800">Budgeted Tier</Badge>
+                  <Badge className="bg-success/20 text-success-foreground border-success/30">Budgeted Tier</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -467,7 +465,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
               <span>Compare Tiers</span>
-              <Badge className="bg-blue-100 text-blue-800">Multi-Tier Planning</Badge>
+              <Badge className="bg-primary/20 text-primary-foreground border-primary/30">Multi-Tier Planning</Badge>
             </CardTitle>
             <p className="text-sm text-gray-600 mt-1">
               Choose your perfect balance of budget and experience
@@ -708,7 +706,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                             <div className="mt-2">
                               <Button 
                                 size="sm" 
-                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                className="bg-primary hover:bg-primary-hover text-primary-foreground"
                                 onClick={() => window.open(scheduleItem.bookingUrl, '_blank')}
                               >
                                 <Globe className="w-4 h-4 mr-2" />
@@ -1101,7 +1099,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                     size="lg" 
                     onClick={onBookCompleteTrip}
                     disabled={isBooking || !apiResponse?.id || !propSelectedTier}
-                    className={`${lastBooking ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700'} text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 px-8`}
+                    className={`${lastBooking ? 'bg-success hover:bg-success/90' : 'bg-primary hover:bg-primary-hover'} text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 px-8`}
                   >
                     {isBooking ? (
                       <>
@@ -1126,17 +1124,17 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
 
               {/* Booking error display */}
               {bookingError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
-                  <div className="flex items-center space-x-2 text-red-800">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mt-4">
+                  <div className="flex items-center space-x-2 text-destructive">
                     <XCircle className="w-5 h-5" />
                     <span className="font-medium">Booking Failed</span>
                   </div>
-                  <p className="text-red-700 mt-1">{bookingError}</p>
+                  <p className="text-destructive mt-1">{bookingError}</p>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={resetBookingState}
-                    className="mt-2 text-red-700 border-red-300 hover:bg-red-50"
+                    className="mt-2 text-destructive border-destructive/30 hover:bg-destructive/10"
                   >
                     Try Again
                   </Button>
@@ -1145,12 +1143,12 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
 
               {/* Success message */}
               {lastBooking && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
-                  <div className="flex items-center space-x-2 text-green-800">
+                <div className="bg-success/10 border border-success/20 rounded-lg p-4 mt-4">
+                  <div className="flex items-center space-x-2 text-success">
                     <CheckCircle className="w-5 h-5" />
                     <span className="font-medium">Booking Successful!</span>
                   </div>
-                  <p className="text-green-700 mt-1">
+                  <p className="text-success mt-1">
                     Your complete trip has been booked successfully! 
                     {lastBooking.bookingReference && (
                       <span className="font-medium"> Reference: {lastBooking.bookingReference}</span>

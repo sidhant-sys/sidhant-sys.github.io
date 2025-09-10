@@ -170,28 +170,32 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
   const getTierColor = (tier: TierType) => {
     switch (tier) {
       case 'economy':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary/10 text-primary border-primary/20';
       case 'premium':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-primary/15 text-primary border-primary/30';
       case 'luxury':
-        return 'bg-amber-100 text-amber-800';
+        return 'bg-primary/20 text-primary border-primary/40';
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold flex items-center space-x-2">
-            <ShoppingCart className="w-5 h-5" />
-            <span>Book Your {selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} Experience</span>
-          </h2>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-primary/10 rounded-full">
+              <ShoppingCart className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-2xl font-semibold text-foreground">
+              Book Your {selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} Experience
+            </h2>
+          </div>
+          <p className="text-muted-foreground text-lg">
             Curated {selectedTier} options for {destination}
           </p>
         </div>
         
-        <Badge className={getTierColor(selectedTier)}>
+        <Badge className={`${getTierColor(selectedTier)} px-4 py-2 text-sm font-medium border`}>
           {selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} Tier
         </Badge>
       </div>
@@ -215,7 +219,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
       {/* Booking Items Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+          <Card key={item.id} className="overflow-hidden shadow-professional hover:shadow-professional-lg transition-all duration-300 transform hover:scale-[1.02] bg-card">
             <div className="relative">
               <ImageWithFallback
                 src={item.image}
@@ -238,12 +242,12 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
               </Button>
               <div className="absolute top-2 left-2">
                 <Badge className={`${
-                  item.type === 'flight' ? 'bg-blue-500' :
-                  item.type === 'hotel' ? 'bg-green-500' :
-                  item.type === 'activity' ? 'bg-orange-500' :
-                  item.type === 'restaurant' ? 'bg-purple-500' :
-                  'bg-gray-500'
-                } text-white`}>
+                  item.type === 'flight' ? 'bg-primary text-primary-foreground' :
+                  item.type === 'hotel' ? 'bg-success text-success-foreground' :
+                  item.type === 'activity' ? 'bg-warning text-warning-foreground' :
+                  item.type === 'restaurant' ? 'bg-primary/80 text-primary-foreground' :
+                  'bg-muted-foreground text-white'
+                }`}>
                   {getTypeIcon(item.type)}
                   <span className="ml-1">{item.type}</span>
                 </Badge>
@@ -318,17 +322,18 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
                   size="sm"
                   onClick={() => onBookItem(item)}
                   disabled={bookedItems.includes(item.id)}
-                  className={bookedItems.includes(item.id) ? 'bg-green-600' : ''}
+                  variant={bookedItems.includes(item.id) ? 'success' : 'default'}
+                  className="transition-all duration-200"
                 >
                   {bookedItems.includes(item.id) ? (
                     <>
-                      <CreditCard className="w-4 h-4 mr-1" />
+                      <CreditCard className="w-4 h-4 mr-2" />
                       Booked
                     </>
                   ) : (
                     <>
-                      <ShoppingCart className="w-4 h-4 mr-1" />
-                      Book
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Book Now
                     </>
                   )}
                 </Button>
@@ -345,14 +350,21 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
       </div>
 
       {filteredItems.length === 0 && (
-        <Card className="p-8 text-center">
-          <div className="space-y-2">
-            <ShoppingCart className="w-12 h-12 mx-auto text-muted-foreground" />
-            <h3>No items found</h3>
-            <p className="text-muted-foreground">
-              No {selectedCategory === 'all' ? 'booking options' : selectedCategory + ' options'} 
-              available for the {selectedTier} tier.
-            </p>
+        <Card className="p-12 text-center shadow-professional bg-card">
+          <div className="space-y-4">
+            <div className="p-4 bg-muted/30 rounded-full w-fit mx-auto">
+              <ShoppingCart className="w-12 h-12 text-muted-foreground" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold">No items found</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                No {selectedCategory === 'all' ? 'booking options' : selectedCategory + ' options'} 
+                available for the {selectedTier} tier at the moment.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => setSelectedCategory('all')}>
+              View All Categories
+            </Button>
           </div>
         </Card>
       )}

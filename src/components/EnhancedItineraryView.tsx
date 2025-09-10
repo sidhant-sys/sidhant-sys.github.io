@@ -6,9 +6,14 @@ import { AspectRatio } from './ui/aspect-ratio';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ItineraryDisplay } from './ItineraryDisplay';
 import { DetailedBookingView } from './DetailedBookingView';
-import { transformItineraryResponse, getCostBreakdown, getFormattedPrice } from '../utils/itineraryTransform';
+import { transformItineraryResponse, getCostBreakdown } from '../utils/itineraryTransform';
+import { usePricing } from '../hooks/usePricing';
+import { CurrencyDropdown } from './CurrencyDropdown';
 import { ItineraryApiResponse } from '../types/api';
 import { TierType } from './TierSelector';
+import tripInspiration1 from '../assets/trip-inspiration1.png';
+import tripInspiration2 from '../assets/trip-inspiration2.png';
+import experienceVideo from '../assets/experience.mp4';
 import { 
   MapPin, 
   Calendar, 
@@ -90,6 +95,9 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   const [viewMode, setViewMode] = useState<'overview' | 'itinerary' | 'media'>('overview');
   const [selectedMediaCategory, setSelectedMediaCategory] = useState('all');
   const [selectedBookingCategory, setSelectedBookingCategory] = useState<string | null>(null);
+  
+  // Use pricing hook for currency conversion
+  const { formatPriceFromINR } = usePricing();
 
   // Transform API response if available
   const transformedData = apiResponse ? transformItineraryResponse(apiResponse) : null;
@@ -123,25 +131,25 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
     costBreakdown = getCostBreakdown(undefined);
   }
 
-  // Mock media data based on destination
+  // Media data with trip inspiration images as the first two items
   const mediaItems: MediaItem[] = [
     {
       id: '1',
       type: 'image',
-      url: 'https://images.unsplash.com/photo-1574631034909-0343b5ad92a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGVpZmZlbCUyMHRvd2VyJTIwdHJhdmVsfGVufDF8fHx8MTc1NzA2MjQ3OXww&ixlib=rb-4.1.0&q=80&w=1080',
-      title: 'Eiffel Tower at Sunrise',
-      description: 'Experience the magic of Paris iconic landmark in the early morning light',
-      location: 'Champ de Mars',
-      category: 'attractions'
+      url: tripInspiration1,
+      title: 'Trip Inspiration - Scenic Journey',
+      description: 'Beautiful travel inspiration showcasing stunning destinations and experiences',
+      location: destination || 'Featured Destination',
+      category: 'inspiration'
     },
     {
       id: '2',
       type: 'image',
-      url: 'https://images.unsplash.com/photo-1697599211453-4d9ada19c72b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGxvdXZyZSUyMG11c2V1bXxlbnwxfHx8fDE3NTcxNTIwOTF8MA&ixlib=rb-4.1.0&q=80&w=1080',
-      title: 'Louvre Museum',
-      description: 'World\'s largest art museum with incredible masterpieces',
-      location: 'Rue de Rivoli',
-      category: 'culture'
+      url: tripInspiration2,
+      title: 'Trip Inspiration - Adventure Awaits',
+      description: 'Discover amazing places and create unforgettable memories on your journey',
+      location: destination || 'Featured Destination',
+      category: 'inspiration'
     },
     {
       id: '3',
@@ -193,7 +201,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       icon: <Plane className="w-5 h-5" />,
       description: 'Direct flights and connections',
       itemCount: getItemCountByType('flight'),
-      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.flights)}` : '₹37,000 - ₹1,80,000',
+      priceRange: costBreakdown ? `${formatPriceFromINR(costBreakdown.flights)}` : `${formatPriceFromINR(37000)} - ${formatPriceFromINR(180000)}`,
       image: 'https://images.unsplash.com/photo-1556388158-158dc78cd3f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhaXJwbGFuZSUyMGZsaWdodHxlbnwxfHx8fDE3NTcxNTMzMzN8MA&ixlib=rb-4.1.0&q=80&w=1080',
       color: 'bg-blue-500'
     },
@@ -203,7 +211,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       icon: <Hotel className="w-5 h-5" />,
       description: 'From boutique to luxury stays',
       itemCount: getItemCountByType('hotel'),
-      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.hotels)}` : '₹10,000 - ₹65,000',
+      priceRange: costBreakdown ? `${formatPriceFromINR(costBreakdown.hotels)}` : `${formatPriceFromINR(10000)} - ${formatPriceFromINR(65000)}`,
       image: 'https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGJvb2tpbmclMjB0cmF2ZWx8ZW58MXx8fHwxNzU3MTUzMzMzfDA&ixlib=rb-4.1.0&q=80&w=1080',
       color: 'bg-green-500'
     },
@@ -213,7 +221,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       icon: <span className="text-lg">🎯</span>,
       description: 'Tours, attractions & experiences',
       itemCount: getItemCountByType('activity'),
-      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.activities)}` : '₹3,000 - ₹28,000',
+      priceRange: costBreakdown ? `${formatPriceFromINR(costBreakdown.activities)}` : `${formatPriceFromINR(3000)} - ${formatPriceFromINR(28000)}`,
       image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlaWZmZWwlMjB0b3dlciUyMHBhcmlzfGVufDF8fHwxNzU3MTUzMzMzfDA&ixlib=rb-4.1.0&q=80&w=1080',
       color: 'bg-orange-500'
     },
@@ -223,7 +231,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       icon: <Utensils className="w-5 h-5" />,
       description: 'Restaurants & culinary experiences',
       itemCount: getItemCountByType('meal'),
-      priceRange: costBreakdown ? `${getFormattedPrice(costBreakdown.meals)}` : '₹3,700 - ₹25,000',
+      priceRange: costBreakdown ? `${formatPriceFromINR(costBreakdown.meals)}` : `${formatPriceFromINR(3700)} - ${formatPriceFromINR(25000)}`,
       image: 'https://images.unsplash.com/photo-1621327017866-6fb07e6c96ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGZyZW5jaCUyMGZvb2QlMjBkaW5pbmd8ZW58MXx8fHwxNzU3MTU0MDc5fDA&ixlib=rb-4.1.0&q=80&w=1080',
       color: 'bg-purple-500'
     }
@@ -231,6 +239,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
 
   const mediaCategories = [
     { id: 'all', name: 'All Media' },
+    { id: 'inspiration', name: 'Inspiration' },
     { id: 'attractions', name: 'Attractions' },
     { id: 'dining', name: 'Dining' },
     { id: 'culture', name: 'Culture' },
@@ -246,11 +255,31 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       {/* Destination Hero */}
       <Card className="overflow-hidden">
         <div className="relative h-64">
-          <ImageWithFallback
-            src={mediaItems[0]?.url || ''}
-            alt={transformedData?.globalData.destination || destination}
-            className="w-full h-full object-cover"
+          <video
+            src={experienceVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover transition-opacity duration-500"
+            onError={(e) => {
+              // Fallback to image if video fails
+              const target = e.target as HTMLVideoElement;
+              target.style.display = 'none';
+              const fallbackImg = document.createElement('img');
+              fallbackImg.src = mediaItems[0]?.url || '';
+              fallbackImg.className = 'w-full h-full object-cover';
+              fallbackImg.alt = transformedData?.globalData.destination || destination || '';
+              target.parentNode?.appendChild(fallbackImg);
+            }}
           />
+          {/* Video play indicator */}
+          <div className="absolute bottom-4 right-4">
+            <div className="bg-black/20 rounded-full p-2 backdrop-blur-sm">
+              <Play className="w-4 h-4 text-white/80" />
+            </div>
+          </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-6 left-6 text-white">
             <h1 className="text-3xl font-bold mb-2">{transformedData?.globalData.destination || destination}</h1>
@@ -270,11 +299,11 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
             </div>
           </div>
           <div className="absolute top-6 right-6 flex space-x-2">
-            <Button size="sm" variant="secondary">
+            <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30">
               <Heart className="w-4 h-4 mr-1" />
               Save
             </Button>
-            <Button size="sm" variant="secondary">
+            <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30">
               <Share className="w-4 h-4 mr-1" />
               Share
             </Button>
@@ -305,7 +334,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
         <Card className="text-center">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-primary">
-              {costBreakdown ? getFormattedPrice(costBreakdown.total) : '$2.5k'}
+              {costBreakdown ? formatPriceFromINR(costBreakdown.total) : formatPriceFromINR(250000)}
             </div>
             <p className="text-sm text-muted-foreground">Est. Budget</p>
           </CardContent>
@@ -321,7 +350,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
                 <BarChart3 className="w-4 h-4 text-gray-600" />
                 <span className="font-medium text-gray-900">Cost Breakdown</span>
               </div>
-              <span className="text-lg font-bold text-gray-900">{getFormattedPrice(costBreakdown.total)}</span>
+              <span className="text-lg font-bold text-gray-900">{formatPriceFromINR(costBreakdown.total)}</span>
             </div>
             
             <div className="flex flex-wrap gap-2">
@@ -339,7 +368,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
                   <div key={category.key} className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${category.color} text-xs font-medium`}>
                     <span>{category.icon}</span>
                     <span>{category.label}</span>
-                    <span className="font-semibold">{getFormattedPrice(amount)}</span>
+                    <span className="font-semibold">{formatPriceFromINR(amount)}</span>
                     <span className="opacity-75">({percentage.toFixed(0)}%)</span>
                   </div>
                 );
@@ -365,7 +394,6 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
               key={category.id} 
               className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => {
-                console.log('Category clicked:', category.id);
                 setSelectedBookingCategory(category.id);
               }}
             >
@@ -504,9 +532,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   );
 
   // Show detailed booking view if a category is selected
-  console.log('selectedBookingCategory:', selectedBookingCategory);
   if (selectedBookingCategory) {
-    console.log('Rendering DetailedBookingView for:', selectedBookingCategory);
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <DetailedBookingView
@@ -525,7 +551,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       {/* Debug info */}
       {selectedBookingCategory && (
-        <div className="bg-blue-100 p-4 rounded-lg">
+        <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg">
           <p>Debug: Selected category: {selectedBookingCategory}</p>
           <Button onClick={() => setSelectedBookingCategory(null)}>Clear Selection</Button>
         </div>
@@ -570,10 +596,15 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
               </div>
             </div>
             
-            <Button onClick={onProceedToTiers}>
-              <Settings className="w-4 h-4 mr-1" />
-              Choose a Plan
-            </Button>
+            <div className="flex items-center space-x-3">
+              {/* Currency Dropdown */}
+              <CurrencyDropdown size="sm" />
+              
+              <Button onClick={onProceedToTiers}>
+                <Settings className="w-4 h-4 mr-1" />
+                Choose a Plan
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

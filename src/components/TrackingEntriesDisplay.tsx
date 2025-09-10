@@ -97,8 +97,8 @@ export const TrackingEntriesDisplay: React.FC<TrackingEntriesDisplayProps> = ({
 
       {/* Success Message */}
       {showSuccessMessage && newTrackingId && (
-        <Alert className="border-green-200 bg-green-50">
-          <AlertDescription className="text-green-800">
+        <Alert className="border-success/20 bg-success/10">
+          <AlertDescription className="text-success">
             <div className="flex items-center justify-between">
               <div>
                 <strong>🎉 New Tracking ID Generated!</strong>

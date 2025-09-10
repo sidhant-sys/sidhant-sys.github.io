@@ -187,10 +187,10 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
   const bookingItems = getBookingItems();
 
   const categoryInfo = {
-    flights: { icon: <Plane className="w-4 h-4" />, color: 'bg-blue-500', title: 'Flight Options' },
-    hotels: { icon: <Hotel className="w-4 h-4" />, color: 'bg-green-500', title: 'Hotel Options' },
-    activities: { icon: <span className="text-sm">🎯</span>, color: 'bg-orange-500', title: 'Activity Options' },
-    dining: { icon: <Utensils className="w-4 h-4" />, color: 'bg-purple-500', title: 'Dining Options' }
+    flights: { icon: <Plane className="w-4 h-4" />, color: 'bg-primary', title: 'Flight Options' },
+    hotels: { icon: <Hotel className="w-4 h-4" />, color: 'bg-success', title: 'Hotel Options' },
+    activities: { icon: <span className="text-sm">🎯</span>, color: 'bg-warning', title: 'Activity Options' },
+    dining: { icon: <Utensils className="w-4 h-4" />, color: 'bg-primary/80', title: 'Dining Options' }
   };
 
   const currentCategory = categoryInfo[category];
@@ -256,11 +256,11 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
                   className="w-full h-full object-cover"
                 />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-                      {category === 'flights' && <Plane className="w-4 h-4 text-blue-500" />}
-                      {category === 'hotels' && <Hotel className="w-4 h-4 text-green-500" />}
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 p-4">
+                      {category === 'flights' && <Plane className="w-4 h-4 text-primary" />}
+                      {category === 'hotels' && <Hotel className="w-4 h-4 text-success" />}
                       {category === 'activities' && <span className="text-xl">🎯</span>}
-                      {category === 'dining' && <Utensils className="w-4 h-4 text-purple-500" />}
+                      {category === 'dining' && <Utensils className="w-4 h-4 text-primary/80" />}
                     </div>
                   )}
               </div>
@@ -274,7 +274,7 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
                           <div className="flex items-center space-x-2">
                             <h3 className="text-sm font-semibold text-gray-900 truncate">{item.name}</h3>
                             {item.id.startsWith('upsell-') && (
-                              <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700">
+                              <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-warning/20 text-warning-foreground">
                                 Upgrade
                               </Badge>
                             )}

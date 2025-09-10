@@ -18,7 +18,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   children
 }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <HeroSection />
       
       <ProgressIndicator 
@@ -27,8 +27,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         layoutMode={layoutMode}
       />
       
-      <main className="flex-1">
-        {children}
+      <main className="flex-1 px-4 py-6">
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
       
       <Footer />

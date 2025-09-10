@@ -32,7 +32,6 @@ class ItineraryApiClient {
         throw new Error('Tracking ID is required');
       }
 
-      console.log('Calling Amadeus API with tracking ID:', trackingId);
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -65,7 +64,6 @@ class ItineraryApiClient {
 
       const responseData = await response.json();
       
-      console.log('Raw API response:', responseData);
       
       if (!responseData) {
         throw new Error('Invalid response format from API');
@@ -73,7 +71,6 @@ class ItineraryApiClient {
       
       // Check if response is an empty array - this means data is not ready yet
       if (Array.isArray(responseData) && responseData.length === 0) {
-        console.log('API returned empty array - data not ready yet');
         return {
           data: null as any,
           success: true, // Success but no data yet
@@ -88,15 +85,12 @@ class ItineraryApiClient {
         throw new Error('Invalid response format from API - no valid data found');
       }
       
-      console.log('Amadeus API response received (raw):', responseData);
-      console.log('Amadeus API response (extracted data):', data);
       
       return {
         data,
         success: true,
       };
     } catch (error) {
-      console.error('Error calling Amadeus API:', error);
       
       let errorMessage = 'Failed to fetch itinerary';
       
@@ -122,7 +116,6 @@ class ItineraryApiClient {
         throw new Error('Itinerary ID and class type are required');
       }
 
-      console.log('Creating booking:', bookingRequest);
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -160,14 +153,12 @@ class ItineraryApiClient {
         throw new Error('Invalid response format from API');
       }
       
-      console.log('Booking API response received:', data);
       
       return {
         data,
         success: true,
       };
     } catch (error) {
-      console.error('Error creating booking:', error);
       
       let errorMessage = 'Failed to create booking';
       
