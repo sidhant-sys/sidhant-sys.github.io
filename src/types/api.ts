@@ -4,6 +4,7 @@ export interface ApiResponse<T = any> {
   success: boolean;
   message?: string;
   error?: string;
+  isEmpty?: boolean; // Flag to indicate empty response (data not ready yet)
 }
 
 export interface ApiError {

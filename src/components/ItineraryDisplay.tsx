@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Clock, Plane, Edit, Trash2, CreditCard, ShoppingCart, TrendingUp, Users, DollarSign, Star, Sparkles, ArrowRight, ChevronDown, ChevronUp, Zap, Target, Globe } from 'lucide-react';
+import { Calendar, MapPin, Clock, Plane, Edit, Trash2, CreditCard, ShoppingCart, TrendingUp, Users, DollarSign, Star, Sparkles, ArrowRight, ChevronDown, ChevronUp, Zap, Target, Globe, Loader2, XCircle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { useBooking } from '../hooks/useBooking';
+import { TierType } from './TierSelector';
 
 interface ItineraryItem {
   id: string;
@@ -118,6 +120,8 @@ interface ItineraryDisplayProps {
   luxuryOverview?: TierOverview;
   flightsData?: FlightDetail[];
   hotelsData?: HotelDetail[];
+  apiResponse?: any; // API response containing itinerary ID
+  selectedTier?: TierType;
 }
 
 export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
@@ -133,10 +137,33 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
   luxuryOverview,
   // flightsData = [],
   // hotelsData = []
+  apiResponse,
+  selectedTier: propSelectedTier
 }) => {
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [selectedTier, setSelectedTier] = useState<'budgeted' | 'premium' | 'luxury'>('budgeted');
   const [animatedValues, setAnimatedValues] = useState<{ [key: string]: number }>({});
+
+  // Booking functionality
+  const { isBooking, bookingError, lastBooking, handleBooking, resetBookingState } = useBooking({
+    onBookingSuccess: (booking) => {
+      console.log('Booking successful:', booking);
+    },
+    onBookingError: (error) => {
+      console.error('Booking failed:', error);
+    }
+  });
+
+
+  const onBookCompleteTrip = async () => {
+    if (!apiResponse?.id || !propSelectedTier) {
+      alert('Missing booking information. Please try again.');
+      return;
+    }
+
+    resetBookingState();
+    await handleBooking(apiResponse.id, propSelectedTier);
+  };
 
   // Animation effect for cost values
   useEffect(() => {
@@ -1072,14 +1099,65 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                   
                   <Button 
                     size="lg" 
-                    className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 px-8"
+                    onClick={onBookCompleteTrip}
+                    disabled={isBooking || !apiResponse?.id || !propSelectedTier}
+                    className={`${lastBooking ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700'} text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 px-8`}
                   >
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    Book Complete Trip
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    {isBooking ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Booking...
+                      </>
+                    ) : lastBooking ? (
+                      <>
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        Trip Booked!
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-5 h-5 mr-2" />
+                        Book Complete Trip
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
+
+              {/* Booking error display */}
+              {bookingError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                  <div className="flex items-center space-x-2 text-red-800">
+                    <XCircle className="w-5 h-5" />
+                    <span className="font-medium">Booking Failed</span>
+                  </div>
+                  <p className="text-red-700 mt-1">{bookingError}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={resetBookingState}
+                    className="mt-2 text-red-700 border-red-300 hover:bg-red-50"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              )}
+
+              {/* Success message */}
+              {lastBooking && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                  <div className="flex items-center space-x-2 text-green-800">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">Booking Successful!</span>
+                  </div>
+                  <p className="text-green-700 mt-1">
+                    Your complete trip has been booked successfully! 
+                    {lastBooking.bookingReference && (
+                      <span className="font-medium"> Reference: {lastBooking.bookingReference}</span>
+                    )}
+                  </p>
+                </div>
+              )}
               
               {/* Trust indicators */}
               <div className="flex items-center justify-center space-x-8 mt-4 pt-4 border-t border-gray-100">

@@ -8,11 +8,12 @@ import { BookingInterface } from './BookingInterface';
 // Removed TrackingEntriesDisplay import - using hook directly
 import { ItineraryLoadingScreen } from './ItineraryLoadingScreen';
 import { useTrackingPolling } from '../hooks/useTrackingPolling';
+import { useBooking } from '../hooks/useBooking';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 // Removed Tabs imports - using custom implementation
 import { Badge } from './ui/badge';
-import { ArrowRight, CreditCard } from 'lucide-react';
+import { ArrowRight, CreditCard, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { StepType, TierType, ItineraryItem, Message, BudgetEstimate } from '../types';
 import { ItineraryApiResponse } from '../types/api';
 
@@ -105,6 +106,27 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     onItineraryGenerated: handleItineraryGenerated,
     onItineraryGenerationStart: handleItineraryGenerationStart
   });
+
+  // Booking functionality
+  const { isBooking, bookingError, lastBooking, handleBooking, resetBookingState } = useBooking({
+    onBookingSuccess: (booking) => {
+      console.log('Booking successful:', booking);
+      alert(`Booking successful! Reference: ${booking.bookingReference || booking.id}`);
+    },
+    onBookingError: (error) => {
+      console.error('Booking failed:', error);
+    }
+  });
+
+  const onCompleteBooking = React.useCallback(async () => {
+    if (!generatedItineraryData?.id || !selectedTier) {
+      alert('Missing itinerary or tier information');
+      return;
+    }
+
+    resetBookingState();
+    await handleBooking(generatedItineraryData.id, selectedTier);
+  }, [generatedItineraryData?.id, selectedTier, handleBooking, resetBookingState]);
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'planning':
@@ -261,6 +283,41 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                 />
               )}
               
+              {/* Booking error display */}
+              {bookingError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center space-x-2 text-red-800">
+                    <XCircle className="w-5 h-5" />
+                    <span className="font-medium">Booking Failed</span>
+                  </div>
+                  <p className="text-red-700 mt-1">{bookingError}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={resetBookingState}
+                    className="mt-2 text-red-700 border-red-300 hover:bg-red-50"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              )}
+
+              {/* Success message */}
+              {lastBooking && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center space-x-2 text-green-800">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">Booking Successful!</span>
+                  </div>
+                  <p className="text-green-700 mt-1">
+                    Your booking has been confirmed. 
+                    {lastBooking.bookingReference && (
+                      <span className="font-medium"> Reference: {lastBooking.bookingReference}</span>
+                    )}
+                  </p>
+                </div>
+              )}
+
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => {}}>
                   ← Back to Tiers
@@ -270,8 +327,27 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                     <CreditCard className="w-4 h-4 mr-1" />
                     View Cart ({bookedItems.length})
                   </Button>
-                  <Button onClick={() => alert('Booking functionality coming soon!')}>
-                    Complete Booking
+                  <Button 
+                    onClick={onCompleteBooking}
+                    disabled={isBooking || !generatedItineraryData?.id || !selectedTier}
+                    className={lastBooking ? 'bg-green-600 hover:bg-green-700' : ''}
+                  >
+                    {isBooking ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        Booking...
+                      </>
+                    ) : lastBooking ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Booked!
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-4 h-4 mr-1" />
+                        Complete Booking
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>

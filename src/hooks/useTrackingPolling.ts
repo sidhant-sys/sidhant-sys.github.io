@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { mockItineraryResponse } from '../data/mockApiResponse';
+import { getItineraryByTrackingId } from '../services/itineraryApi';
 
 interface TrackingEntry {
   id: string;
@@ -36,39 +36,79 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
   const [isPolling, setIsPolling] = useState(false);
   const [isGeneratingItinerary, setIsGeneratingItinerary] = useState(false);
   const [hasGeneratedItinerary, setHasGeneratedItinerary] = useState(false);
+  const [isApiPolling, setIsApiPolling] = useState(false);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const apiPollingRef = useRef<NodeJS.Timeout | null>(null);
 
-  const callItineraryAPI = useCallback(async (trackingId: string) => {
-    try {
-      setIsGeneratingItinerary(true);
-      if (onItineraryGenerationStart) {
-        onItineraryGenerationStart();
-      }
-      console.log('Calling /getItineraryDetails with tracking_id:', trackingId);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // For now, use mock response
-      const response = mockItineraryResponse;
-      
-      console.log('Itinerary API response:', response);
-      
-      if (onItineraryGenerated) {
-        onItineraryGenerated(response);
-      }
-      
-      // Mark that we've generated an itinerary to prevent restarting polling
-      setHasGeneratedItinerary(true);
-      
-    } catch (err) {
-      console.error('Error calling itinerary API:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate itinerary');
-    } finally {
-      setIsGeneratingItinerary(false);
+  const stopApiPolling = useCallback(() => {
+    if (apiPollingRef.current) {
+      clearInterval(apiPollingRef.current);
+      apiPollingRef.current = null;
+      console.log('Stopped API polling');
     }
-  }, [onItineraryGenerated]);
+    setIsApiPolling(false);
+  }, []);
+
+  const startItineraryPolling = useCallback((trackingId: string) => {
+    // Clear any existing polling
+    stopApiPolling();
+    
+    console.log('🚀 Starting API polling for tracking_id:', trackingId);
+    setIsApiPolling(true);
+    
+    const makeApiCall = async () => {
+      try {
+        console.log('🔄 Making API call...');
+        const apiResponse = await getItineraryByTrackingId(trackingId);
+        
+        if (!apiResponse.success) {
+          console.log('❌ API call failed:', apiResponse.error);
+          return; // Continue polling
+        }
+        
+        // Check if API explicitly returned isEmpty flag (empty array case)
+        if (apiResponse.isEmpty) {
+          console.log('📭 API returned empty array - data not ready yet');
+          return; // Continue polling
+        }
+        
+        // Check if response data is null/undefined
+        const data = apiResponse.data;
+        if (!data) {
+          console.log('📭 API returned null/undefined data');
+          return; // Continue polling
+        }
+        
+        // We have valid data - stop polling and process it
+        console.log('✅ API returned valid data - stopping polling');
+        stopApiPolling();
+        
+        if (onItineraryGenerated) {
+          onItineraryGenerated(data);
+        }
+        
+        setHasGeneratedItinerary(true);
+        setIsGeneratingItinerary(false);
+        
+      } catch (err) {
+        console.error('💥 Error in API call:', err);
+        // Continue polling on error
+      }
+    };
+    
+    // Make first call immediately
+    makeApiCall();
+    
+    // Set up interval for subsequent calls
+    apiPollingRef.current = setInterval(() => {
+      console.log('⏰ 10 seconds passed - making next API call');
+      makeApiCall();
+    }, 10000);
+    
+    console.log('📅 Polling interval started');
+    
+  }, [onItineraryGenerated, stopApiPolling]);
 
   const fetchEntries = useCallback(async () => {
     if (!enabled) return;
@@ -96,7 +136,7 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
         
         // Check if tracking_id has changed
         if (previousTrackingId !== null && currentTrackingId !== previousTrackingId) {
-          console.log('Tracking ID changed!', {
+          console.log('🎯 NEW TRACKING ID DETECTED!', {
             previous: previousTrackingId,
             current: currentTrackingId
           });
@@ -110,13 +150,20 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
           setNewTrackingId(currentTrackingId);
           setShowSuccessMessage(true);
           
-          // Stop polling
+          // STEP 1: Stop database polling
+          console.log('🚫 STEP 1: Stopping database polling');
           stopPolling();
           
-          // Add a small delay to ensure smooth transition, then call itinerary API
-          setTimeout(() => {
-            callItineraryAPI(currentTrackingId);
-          }, 500); // 500ms delay for smooth transition
+          // STEP 2: Start showing loading screen immediately
+          console.log('📺 STEP 2: Starting loading screen');
+          setIsGeneratingItinerary(true);
+          if (onItineraryGenerationStart) {
+            onItineraryGenerationStart();
+          }
+          
+          // STEP 3: Start API polling for itinerary data
+          console.log('🚀 STEP 3: Starting API polling for itinerary data');
+          startItineraryPolling(currentTrackingId);
           
           // Auto-hide success message after 5 seconds
           setTimeout(() => {
@@ -142,13 +189,14 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
     }
 
     setIsPolling(true);
-    console.log('Starting tracking polling...');
+    console.log('📊 Starting DATABASE polling for tracking_id changes...');
     
     // Fetch immediately
     fetchEntries();
     
-    // Then poll at intervals
+    // Then poll at intervals (every 2 seconds)
     intervalRef.current = setInterval(fetchEntries, interval);
+    console.log('📊 Database polling interval set for every', interval, 'ms');
   }, [fetchEntries, interval]);
 
   const stopPolling = useCallback(() => {
@@ -157,7 +205,7 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
       intervalRef.current = null;
     }
     setIsPolling(false);
-    console.log('Stopped tracking polling');
+    console.log('🚫 Stopped database tracking polling');
   }, []);
 
   const clearEntry = useCallback(() => {
@@ -171,24 +219,32 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
     setShowSuccessMessage(false);
   }, []);
 
-  // Auto-start/stop polling based on enabled prop
+  // Auto-start/stop DATABASE polling based on enabled prop
   useEffect(() => {
-    if (enabled && !hasGeneratedItinerary) {
+    if (enabled && !hasGeneratedItinerary && !isApiPolling) {
+      console.log('📊 Starting database polling for tracking_id changes');
       startPolling();
-    } else {
+    } else if (isApiPolling) {
+      console.log('📊 API polling active - keeping database polling stopped');
+      stopPolling();
+    } else if (hasGeneratedItinerary) {
+      console.log('📊 Itinerary generated - stopping database polling');
       stopPolling();
     }
 
     return () => {
       stopPolling();
     };
-  }, [enabled, hasGeneratedItinerary, startPolling, stopPolling]);
+  }, [enabled, hasGeneratedItinerary, isApiPolling, startPolling, stopPolling]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+      }
+      if (apiPollingRef.current) {
+        clearInterval(apiPollingRef.current);
       }
     };
   }, []);
@@ -203,10 +259,13 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
     isPolling,
     isGeneratingItinerary,
     hasGeneratedItinerary,
+    isApiPolling,
     startPolling,
     stopPolling,
     clearEntry,
     dismissSuccessMessage,
-    fetchEntries
+    fetchEntries,
+    stopApiPolling,
+    startItineraryPolling
   };
 };

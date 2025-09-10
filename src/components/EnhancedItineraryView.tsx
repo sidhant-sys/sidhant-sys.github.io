@@ -590,6 +590,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
           onDeleteItem={onDeleteItem}
           dayWiseData={dayWiseItinerary}
           upsellOptions={upsellOptions}
+          apiResponse={apiResponse}
+          selectedTier={selectedTier as TierType}
         />
       )}
     </div>
