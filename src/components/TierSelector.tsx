@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Check, Star, Plane, Crown, Zap } from 'lucide-react';
 
-export type TierType = 'economy' | 'premium' | 'luxury';
+export type TierType = 'budgeted' | 'premium' | 'luxury';
 
 interface TierOption {
   id: TierType;
@@ -22,7 +22,7 @@ interface TierSelectorProps {
   selectedTier: TierType | null;
   onTierSelect: (tier: TierType) => void;
   totalEstimate?: {
-    economy: number;
+    budgeted: number;
     premium: number;
     luxury: number;
   };
@@ -35,11 +35,11 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
 }) => {
   const tiers: TierOption[] = [
     {
-      id: 'economy',
-      name: 'Economy',
+      id: 'budgeted',
+      name: 'Budgeted',
       icon: <Plane className="w-5 h-5" />,
       tagline: 'Budget-friendly essentials',
-      priceRange: '₹₹ - ₹₹₹₹',
+      priceRange: '$$ - $$$$',
       color: 'text-primary',
       bgColor: 'bg-card border-border hover:border-primary/30',
       features: [
@@ -56,7 +56,7 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
       name: 'Premium',
       icon: <Star className="w-5 h-5" />,
       tagline: 'Enhanced comfort & experiences',
-      priceRange: '₹₹₹ - ₹₹₹₹₹',
+      priceRange: '$$$ - $$$$$',
       popular: true,
       color: 'text-primary',
       bgColor: 'bg-card border-border hover:border-primary/30',
@@ -74,7 +74,7 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
       name: 'Luxury',
       icon: <Crown className="w-5 h-5" />,
       tagline: 'Ultimate premium experience',
-      priceRange: '₹₹₹₹₹ - ₹₹₹₹₹₹',
+      priceRange: '$$$$$ - $$$$$$',
       color: 'text-primary',
       bgColor: 'bg-card border-border hover:border-primary/30',
       features: [
@@ -91,7 +91,7 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'USD',
       maximumFractionDigits: 0,
     }).format(price);
   };

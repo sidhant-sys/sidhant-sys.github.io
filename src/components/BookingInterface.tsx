@@ -64,30 +64,30 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
         type: 'flight',
         name: 'Air France - Economy',
         location: 'JFK → CDG',
-        price: selectedTier === 'economy' ? 450 : selectedTier === 'premium' ? 850 : 2200,
-        originalPrice: selectedTier === 'economy' ? 520 : selectedTier === 'premium' ? 950 : 2500,
+        price: selectedTier === 'budgeted' ? 450 : selectedTier === 'premium' ? 850 : 2200,
+        originalPrice: selectedTier === 'budgeted' ? 520 : selectedTier === 'premium' ? 950 : 2500,
         rating: 4.2,
         reviewCount: 1240,
         image: 'https://images.unsplash.com/photo-1556388158-158dc78cd3f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhaXJwbGFuZSUyMGZsaWdodHxlbnwxfHx8fDE3NTcxNTMzMzN8MA&ixlib=rb-4.1.0&q=80&w=1080',
-        description: selectedTier === 'economy' ? 'Direct flight with standard amenities' : selectedTier === 'premium' ? 'Business class with priority boarding' : 'First class with luxury amenities',
-        features: selectedTier === 'economy' ? ['Direct flight', 'In-flight meal', 'Entertainment system'] : selectedTier === 'premium' ? ['Business class', 'Priority boarding', 'Lounge access', 'Extra legroom'] : ['First class', 'Private suite', 'Gourmet dining', 'Personal butler'],
+        description: selectedTier === 'budgeted' ? 'Direct flight with standard amenities' : selectedTier === 'premium' ? 'Business class with priority boarding' : 'First class with luxury amenities',
+        features: selectedTier === 'budgeted' ? ['Direct flight', 'In-flight meal', 'Entertainment system'] : selectedTier === 'premium' ? ['Business class', 'Priority boarding', 'Lounge access', 'Extra legroom'] : ['First class', 'Private suite', 'Gourmet dining', 'Personal butler'],
         duration: '8h 30m',
         available: true,
-        tier: ['economy', 'premium', 'luxury']
+        tier: ['budgeted', 'premium', 'luxury']
       },
       // Hotels
       {
         id: 'hotel-1',
         type: 'hotel',
-        name: selectedTier === 'economy' ? 'Hotel des Arts' : selectedTier === 'premium' ? 'Le Meurice' : 'The Ritz Paris',
+        name: selectedTier === 'budgeted' ? 'Hotel des Arts' : selectedTier === 'premium' ? 'Le Meurice' : 'The Ritz Paris',
         location: 'Central Paris',
-        price: selectedTier === 'economy' ? 120 : selectedTier === 'premium' ? 450 : 800,
-        originalPrice: selectedTier === 'economy' ? 150 : selectedTier === 'premium' ? 520 : 950,
-        rating: selectedTier === 'economy' ? 4.1 : selectedTier === 'premium' ? 4.7 : 4.9,
-        reviewCount: selectedTier === 'economy' ? 890 : selectedTier === 'premium' ? 1340 : 2100,
+        price: selectedTier === 'budgeted' ? 120 : selectedTier === 'premium' ? 450 : 800,
+        originalPrice: selectedTier === 'budgeted' ? 150 : selectedTier === 'premium' ? 520 : 950,
+        rating: selectedTier === 'budgeted' ? 4.1 : selectedTier === 'premium' ? 4.7 : 4.9,
+        reviewCount: selectedTier === 'budgeted' ? 890 : selectedTier === 'premium' ? 1340 : 2100,
         image: 'https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGJvb2tpbmclMjB0cmF2ZWx8ZW58MXx8fHwxNzU3MTUzMzMzfDA&ixlib=rb-4.1.0&q=80&w=1080',
-        description: selectedTier === 'economy' ? 'Comfortable 3-star hotel in central location' : selectedTier === 'premium' ? 'Luxury 4-star hotel with exceptional service' : '5-star palace hotel with world-class amenities',
-        features: selectedTier === 'economy' ? ['Free WiFi', 'Continental breakfast', 'Central location'] : selectedTier === 'premium' ? ['Concierge service', 'Spa access', 'Fine dining', 'Room service'] : ['Butler service', 'Michelin restaurant', 'Private spa', 'Chauffeur service'],
+        description: selectedTier === 'budgeted' ? 'Comfortable 3-star hotel in central location' : selectedTier === 'premium' ? 'Luxury 4-star hotel with exceptional service' : '5-star palace hotel with world-class amenities',
+        features: selectedTier === 'budgeted' ? ['Free WiFi', 'Continental breakfast', 'Central location'] : selectedTier === 'premium' ? ['Concierge service', 'Spa access', 'Fine dining', 'Room service'] : ['Butler service', 'Michelin restaurant', 'Private spa', 'Chauffeur service'],
         available: true,
         tier: [selectedTier]
       },
@@ -95,15 +95,15 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
       {
         id: 'activity-1',
         type: 'activity',
-        name: selectedTier === 'economy' ? 'Eiffel Tower Group Tour' : selectedTier === 'premium' ? 'Private Eiffel Tower Experience' : 'VIP Eiffel Tower with Champagne',
+        name: selectedTier === 'budgeted' ? 'Eiffel Tower Group Tour' : selectedTier === 'premium' ? 'Private Eiffel Tower Experience' : 'VIP Eiffel Tower with Champagne',
         location: 'Eiffel Tower',
-        price: selectedTier === 'economy' ? 35 : selectedTier === 'premium' ? 120 : 350,
+        price: selectedTier === 'budgeted' ? 35 : selectedTier === 'premium' ? 120 : 350,
         rating: 4.6,
         reviewCount: 2840,
         image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlaWZmZWwlMjB0b3dlciUyMHBhcmlzfGVufDF8fHx8MTc1NzE1MzMzM3ww&ixlib=rb-4.1.0&q=80&w=1080',
-        description: selectedTier === 'economy' ? 'Group tour with skip-the-line access' : selectedTier === 'premium' ? 'Private guide with historical insights' : 'Exclusive VIP access with champagne tasting',
-        features: selectedTier === 'economy' ? ['Skip-the-line', 'Audio guide', '2-hour tour'] : selectedTier === 'premium' ? ['Private guide', 'Skip-the-line', 'Photo session', '3-hour experience'] : ['VIP access', 'Private guide', 'Champagne tasting', 'Professional photos'],
-        duration: selectedTier === 'economy' ? '2 hours' : selectedTier === 'premium' ? '3 hours' : '4 hours',
+        description: selectedTier === 'budgeted' ? 'Group tour with skip-the-line access' : selectedTier === 'premium' ? 'Private guide with historical insights' : 'Exclusive VIP access with champagne tasting',
+        features: selectedTier === 'budgeted' ? ['Skip-the-line', 'Audio guide', '2-hour tour'] : selectedTier === 'premium' ? ['Private guide', 'Skip-the-line', 'Photo session', '3-hour experience'] : ['VIP access', 'Private guide', 'Champagne tasting', 'Professional photos'],
+        duration: selectedTier === 'budgeted' ? '2 hours' : selectedTier === 'premium' ? '3 hours' : '4 hours',
         available: true,
         tier: [selectedTier]
       },
@@ -111,14 +111,14 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
       {
         id: 'restaurant-1',
         type: 'restaurant',
-        name: selectedTier === 'economy' ? 'Bistrot Paul Bert' : selectedTier === 'premium' ? 'Le Grand Véfour' : 'L\'Ambroisie',
+        name: selectedTier === 'budgeted' ? 'Bistrot Paul Bert' : selectedTier === 'premium' ? 'Le Grand Véfour' : 'L\'Ambroisie',
         location: 'Paris',
-        price: selectedTier === 'economy' ? 45 : selectedTier === 'premium' ? 150 : 300,
-        rating: selectedTier === 'economy' ? 4.3 : selectedTier === 'premium' ? 4.8 : 5.0,
-        reviewCount: selectedTier === 'economy' ? 650 : selectedTier === 'premium' ? 890 : 450,
+        price: selectedTier === 'budgeted' ? 45 : selectedTier === 'premium' ? 150 : 300,
+        rating: selectedTier === 'budgeted' ? 4.3 : selectedTier === 'premium' ? 4.8 : 5.0,
+        reviewCount: selectedTier === 'budgeted' ? 650 : selectedTier === 'premium' ? 890 : 450,
         image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyZXN0YXVyYW50JTIwZGluaW5nfGVufDF8fHx8MTc1NzE1MzMzM3ww&ixlib=rb-4.1.0&q=80&w=1080',
-        description: selectedTier === 'economy' ? 'Traditional French bistro with authentic cuisine' : selectedTier === 'premium' ? 'Michelin-starred restaurant with refined dishes' : '3 Michelin-starred temple of French gastronomy',
-        features: selectedTier === 'economy' ? ['Traditional cuisine', 'Wine pairing', 'Cozy atmosphere'] : selectedTier === 'premium' ? ['Michelin star', 'Wine sommelier', 'Tasting menu', 'Historic venue'] : ['3 Michelin stars', 'Master chef', 'Exclusive wines', 'Private dining'],
+        description: selectedTier === 'budgeted' ? 'Traditional French bistro with authentic cuisine' : selectedTier === 'premium' ? 'Michelin-starred restaurant with refined dishes' : '3 Michelin-starred temple of French gastronomy',
+        features: selectedTier === 'budgeted' ? ['Traditional cuisine', 'Wine pairing', 'Cozy atmosphere'] : selectedTier === 'premium' ? ['Michelin star', 'Wine sommelier', 'Tasting menu', 'Historic venue'] : ['3 Michelin stars', 'Master chef', 'Exclusive wines', 'Private dining'],
         category: 'French',
         available: true,
         tier: [selectedTier]
@@ -169,7 +169,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
 
   const getTierColor = (tier: TierType) => {
     switch (tier) {
-      case 'economy':
+      case 'budgeted':
         return 'bg-primary/10 text-primary border-primary/20';
       case 'premium':
         return 'bg-primary/15 text-primary border-primary/30';
@@ -208,7 +208,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
             variant={selectedCategory === category.id ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedCategory(category.id)}
-            className="flex items-center space-x-2 whitespace-nowrap"
+            className="flex items-center space-x-2 whitespace-nowrap cursor-pointer"
           >
             {category.icon}
             <span>{category.name}</span>
@@ -229,7 +229,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute top-2 right-2 bg-white/80 hover:bg-white"
+                className="absolute top-2 right-2 bg-white/80 hover:bg-white cursor-pointer"
                 onClick={() => toggleFavorite(item.id)}
               >
                 <Heart 
@@ -323,7 +323,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
                   onClick={() => onBookItem(item)}
                   disabled={bookedItems.includes(item.id)}
                   variant={bookedItems.includes(item.id) ? 'success' : 'default'}
-                  className="transition-all duration-200"
+                  className="transition-all duration-200 cursor-pointer"
                 >
                   {bookedItems.includes(item.id) ? (
                     <>

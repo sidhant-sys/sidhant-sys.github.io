@@ -8,11 +8,11 @@ export const useAppState = () => {
   const [destination, setDestination] = useState('');
   const [dates, setDates] = useState('');
   const [activeTab, setActiveTab] = useState('voice');
-  const [selectedTier, setSelectedTier] = useState<TierType | null>('economy');
+  const [selectedTier, setSelectedTier] = useState<TierType | null>('budgeted');
   const [currentStep, setCurrentStep] = useState<StepType>('planning');
   const [bookedItems, setBookedItems] = useState<string[]>([]);
   const [totalEstimate, setTotalEstimate] = useState<BudgetEstimate>({
-    economy: 0,
+    budgeted: 0,
     premium: 0,
     luxury: 0
   });

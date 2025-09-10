@@ -18,7 +18,7 @@ export interface ItineraryItem {
   bookingAvailable: boolean;
 }
 
-export type TierType = 'economy' | 'premium' | 'luxury';
+export type TierType = 'budgeted' | 'premium' | 'luxury';
 
 export interface BookingItem {
   id: string;
@@ -34,7 +34,7 @@ export interface BookingItem {
 }
 
 export interface BudgetEstimate {
-  economy: number;
+  budgeted: number;
   premium: number;
   luxury: number;
 }

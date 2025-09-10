@@ -135,7 +135,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onClick={handleSend}
             disabled={!inputText.trim() || isTyping}
             size="default"
-            className="px-4"
+            className="px-4 cursor-pointer"
           >
             <Send className="w-4 h-4" />
           </Button>

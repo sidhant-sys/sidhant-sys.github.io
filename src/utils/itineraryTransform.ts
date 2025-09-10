@@ -20,14 +20,14 @@ export function transformItineraryResponse(apiResponse: ItineraryApiResponse) {
 
   // Transform budget estimates with fallbacks
   const budgetEstimate: BudgetEstimate = {
-    economy: generatedItinerary.budgeted?.overview?.total_cost || 0,
+    budgeted: generatedItinerary.budgeted?.overview?.total_cost || 0,
     premium: generatedItinerary.premium?.overview?.total_cost || generatedItinerary.budgeted?.overview?.total_cost || 0,
     luxury: generatedItinerary.luxury?.overview?.total_cost || generatedItinerary.budgeted?.overview?.total_cost || 0,
   };
 
   // Transform itinerary items for each tier with fallbacks
   const transformedItineraries = {
-    economy: generatedItinerary.budgeted ? transformTierItinerary(generatedItinerary.budgeted, 'economy') : [],
+    budgeted: generatedItinerary.budgeted ? transformTierItinerary(generatedItinerary.budgeted, 'budgeted') : [],
     premium: generatedItinerary.premium ? transformTierItinerary(generatedItinerary.premium, 'premium') : 
              generatedItinerary.budgeted ? transformTierItinerary(generatedItinerary.budgeted, 'premium') : [],
     luxury: generatedItinerary.luxury ? transformTierItinerary(generatedItinerary.luxury, 'luxury') : 
@@ -90,11 +90,57 @@ function transformTierItinerary(tier: ItineraryTier | undefined, tierType: TierT
     });
   });
 
+  // Group items by day for day-wise display, ensuring no duplicate days
+  const dayMap = new Map();
+  
+  console.log(`Processing ${tierType} tier with ${tier.days?.length || 0} days`);
+  
+  if (tier.days) {
+    tier.days.forEach((day, dayIndex) => {
+      const dayNumber = day.day;
+      console.log(`Processing day ${dayNumber} (index ${dayIndex}) with ${day.schedule?.length || 0} items`);
+      
+      if (!dayMap.has(dayNumber)) {
+        dayMap.set(dayNumber, {
+          day: dayNumber,
+          schedule: []
+        });
+        console.log(`Created new day entry for day ${dayNumber}`);
+      } else {
+        console.log(`Day ${dayNumber} already exists, adding items to existing schedule`);
+      }
+      
+      // Add all schedule items for this day
+      if (day.schedule) {
+        day.schedule.forEach((item, index) => {
+          dayMap.get(dayNumber).schedule.push({
+            ...item,
+            id: `${tierType}-day${dayNumber}-${index}`,
+          });
+        });
+        console.log(`Added ${day.schedule.length} items to day ${dayNumber}. Total items now: ${dayMap.get(dayNumber).schedule.length}`);
+      }
+    });
+  }
+  
+  // Convert map to array and sort by day number
+  const dayWiseData = Array.from(dayMap.values()).sort((a, b) => a.day - b.day);
+  console.log(`Final dayWiseData for ${tierType}:`, dayWiseData.map(d => ({ day: d.day, itemCount: d.schedule.length })));
+  
+  // Additional validation
+  const dayNumbers = dayWiseData.map(d => d.day);
+  const uniqueDayNumbers = [...new Set(dayNumbers)];
+  if (dayNumbers.length !== uniqueDayNumbers.length) {
+    console.error(`DUPLICATE DAYS DETECTED! Total days: ${dayNumbers.length}, Unique days: ${uniqueDayNumbers.length}`);
+    console.error('Day numbers:', dayNumbers);
+  }
+
   return {
     overview: tier.overview,
     items: itineraryItems,
     bookings: bookingItems,
     upsell: tier.upsell,
+    dayWiseData: dayWiseData,
   };
 }
 
@@ -160,7 +206,7 @@ export function getFormattedDuration(duration: string) {
 }
 
 // Get formatted price
-export function getFormattedPrice(price: number, currency: string = 'INR') {
+export function getFormattedPrice(price: number, currency: string = 'USD') {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: currency,

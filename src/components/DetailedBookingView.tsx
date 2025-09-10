@@ -2,7 +2,6 @@ import React from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getFormattedPrice } from '../utils/itineraryTransform';
 import { 
   Plane, 
@@ -10,13 +9,18 @@ import {
   MapPin, 
   Clock, 
   Utensils,
-  ArrowLeft
+  ArrowLeft,
+  Car,
+  Calendar,
+  Users,
+  Star
 } from 'lucide-react';
 import { TierType } from './TierSelector';
+import FallBack from './FallBack';
 
 interface BookingItem {
   id: string;
-  type: 'flight' | 'hotel' | 'activity' | 'restaurant' | 'transport';
+  type: 'flight' | 'hotel' | 'activity' | 'restaurant' | 'commute';
   name?: string;
   location?: string;
   price?: number;
@@ -39,6 +43,7 @@ interface BookingItem {
   amenities?: string[];
   cuisine?: string;
   dressCode?: string;
+  time?: string;
   groupSize?: string;
   difficulty?: string;
 }
@@ -47,22 +52,25 @@ interface DayScheduleItem {
   type: 'flight' | 'hotel' | 'activity' | 'meal' | 'commute';
   name?: string;
   description?: string;
-  airline?: string;
-  departure_time?: string;
-  arrival_time?: string;
-  class?: string;
+  location?: string | { latitude: number; longitude: number };
   price?: number;
-  from?: string;
-  to?: string;
-  mode?: string;
-  check_in?: string;
   start_time?: string;
   end_time?: string;
-  location?: string | {
-    longitude: number;
-    latitude: number;
-  };
+  duration?: string;
+  airline?: string;
+  flight_number?: string;
+  departure_time?: string;
+  arrival_time?: string;
+  from?: string;
+  to?: string;
+  check_in?: string;
+  check_out?: string;
+  room_type?: string;
   amenities?: string[];
+  cuisine?: string;
+  dress_code?: string;
+  group_size?: string;
+  difficulty?: string;
 }
 
 interface DayWiseData {
@@ -71,7 +79,7 @@ interface DayWiseData {
 }
 
 interface UpsellOption {
-  upsell_type: 'flight' | 'hotel' | 'activity';
+  upsell_type: string;
   upsell_name: string;
   upsell_price: number;
   upsell_benefits: string[];
@@ -80,12 +88,13 @@ interface UpsellOption {
 }
 
 interface DetailedBookingViewProps {
-  category: 'flights' | 'hotels' | 'activities' | 'dining';
+  category: 'flights' | 'hotels' | 'activities' | 'dining' | 'commute';
   selectedTier: TierType;
   destination: string;
   onBack: () => void;
   dayWiseData?: DayWiseData[];
   upsellOptions?: UpsellOption[];
+  tierData?: any; // Direct access to tier data
 }
 
 export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
@@ -93,261 +102,491 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
   selectedTier,
   destination,
   onBack,
-  dayWiseData = [],
-  upsellOptions = []
+  upsellOptions = [],
+  tierData
 }) => {
 
-  // Extract booking items from day-wise schedule AND upsell options based on category
+  // Get fallback content using the FallBack component
+  const getFallbackContent = () => {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-50 border border-gray-200">
+        <FallBack />
+      </div>
+    );
+  };
+
+  // Open location in Google Maps
+  const openInGoogleMaps = (latitude: number, longitude: number) => {
+    const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  // Extract booking items using correct data sources based on category
   const getBookingItems = (): BookingItem[] => {
-    const categoryMap: Record<string, string> = {
-      'flights': 'flight',
-      'hotels': 'hotel', 
-      'activities': 'activity',
-      'dining': 'meal'
-    };
-    
-    const targetType = categoryMap[category];
     const allItems: BookingItem[] = [];
     
-    // 1. Extract all items of the target type from day-wise schedule
-    dayWiseData.forEach((dayData) => {
-      dayData.schedule
-        .filter(item => item.type === targetType)
-        .forEach((scheduleItem, itemIndex) => {
-          const bookingItem: BookingItem = {
-            id: `day-${dayData.day}-${targetType}-${itemIndex}`,
-            type: scheduleItem.type as 'flight' | 'hotel' | 'activity' | 'restaurant',
-            name: scheduleItem.name || 
-                  (scheduleItem.airline && `${scheduleItem.airline} Flight`) ||
-                  (scheduleItem.from && scheduleItem.to && `${scheduleItem.from} to ${scheduleItem.to}`) ||
-                  `${scheduleItem.type.charAt(0).toUpperCase() + scheduleItem.type.slice(1)}`,
-            location: typeof scheduleItem.location === 'string' 
-              ? scheduleItem.location 
-              : scheduleItem.location 
-                ? `${scheduleItem.location.latitude}, ${scheduleItem.location.longitude}`
-                : scheduleItem.to || scheduleItem.from,
-            price: scheduleItem.price,
-            available: true,
-            tier: [selectedTier],
-            // Flight-specific fields
-            ...(scheduleItem.type === 'flight' && {
-              departureTime: scheduleItem.departure_time,
-              arrivalTime: scheduleItem.arrival_time,
-              airline: scheduleItem.airline,
-              flightNumber: scheduleItem.airline, // Using airline as flight number for now
-            }),
-            // Hotel-specific fields
-            ...(scheduleItem.type === 'hotel' && {
-              checkIn: scheduleItem.check_in,
-              amenities: scheduleItem.amenities,
-            }),
-            // Activity-specific fields
-            ...(scheduleItem.type === 'activity' && {
-              description: scheduleItem.description,
-              duration: scheduleItem.start_time && scheduleItem.end_time 
-                ? `${scheduleItem.start_time} - ${scheduleItem.end_time}`
-                : undefined,
-            }),
-            // Meal-specific fields
-            ...(scheduleItem.type === 'meal' && {
-              description: scheduleItem.description,
-              location: typeof scheduleItem.location === 'string' 
-                ? scheduleItem.location 
-                : scheduleItem.location 
-                  ? `${scheduleItem.location.latitude}, ${scheduleItem.location.longitude}`
-                  : undefined,
-            })
-          };
-          
-          allItems.push(bookingItem);
-        });
+    // Debug: Log the tier data being processed
+    console.log('DetailedBookingView - Category:', category);
+    console.log('DetailedBookingView - Selected tier:', selectedTier);
+    console.log('DetailedBookingView - Tier data:', tierData);
+    
+    if (!tierData) {
+      console.log('No tier data available');
+      return allItems;
+    }
+    
+    let categoryItems: any[] = [];
+    
+    // Get items from correct data sources based on category
+    switch (category) {
+      case 'flights':
+        categoryItems = tierData.flights || [];
+        break;
+      case 'hotels':
+        categoryItems = tierData.hotels || [];
+        break;
+      case 'activities':
+        // Extract from days schedule
+        categoryItems = [];
+        if (tierData.days && Array.isArray(tierData.days)) {
+          tierData.days.forEach((day: any) => {
+            if (day.schedule && Array.isArray(day.schedule)) {
+              day.schedule.forEach((item: any) => {
+                if (item.type === 'activity') {
+                  categoryItems.push({
+                    ...item,
+                    day: day.day,
+                    id: `day-${day.day}-activity-${categoryItems.length}`
+                  });
+                }
+              });
+            }
+          });
+        }
+        break;
+      case 'dining':
+        // Extract from days schedule
+        categoryItems = [];
+        if (tierData.days && Array.isArray(tierData.days)) {
+          tierData.days.forEach((day: any) => {
+            if (day.schedule && Array.isArray(day.schedule)) {
+              day.schedule.forEach((item: any) => {
+                if (item.type === 'meal') {
+                  categoryItems.push({
+                    ...item,
+                    day: day.day,
+                    id: `day-${day.day}-meal-${categoryItems.length}`
+                  });
+                }
+              });
+            }
+          });
+        }
+        break;
+      case 'commute':
+        // Extract from days schedule
+        categoryItems = [];
+        if (tierData.days && Array.isArray(tierData.days)) {
+          tierData.days.forEach((day: any) => {
+            if (day.schedule && Array.isArray(day.schedule)) {
+              day.schedule.forEach((item: any) => {
+                if (item.type === 'commute') {
+                  categoryItems.push({
+                    ...item,
+                    day: day.day,
+                    id: `day-${day.day}-commute-${categoryItems.length}`
+                  });
+                }
+              });
+            }
+          });
+        }
+        break;
+    }
+    
+    console.log(`Category ${category} items:`, categoryItems);
+    
+    // Convert items to BookingItem format
+    categoryItems.forEach((item: any, index: number) => {
+      // Create proper name for different categories
+      let itemName = item.name || item[`${category.slice(0, -1)}_name`];
+      if (category === 'commute' && !itemName) {
+        itemName = `${item.mode || 'Transport'} from ${item.from || 'Unknown'} to ${item.to || 'Unknown'}`;
+      } else if (category === 'activities' && !itemName) {
+        itemName = `Activity ${index + 1}`;
+      } else if (category === 'dining' && !itemName) {
+        itemName = `Restaurant ${index + 1}`;
+      } else if (!itemName) {
+        itemName = `${category.charAt(0).toUpperCase() + category.slice(1)} ${index + 1}`;
+      }
+
+      const bookingItem: BookingItem = {
+        id: item.id || `${category}-${index}`,
+        type: category as 'flight' | 'hotel' | 'activity' | 'restaurant' | 'commute',
+        name: itemName,
+        location: item.location || item.address || item[`${category.slice(0, -1)}_address`] || 
+                 (category === 'commute' ? `${item.from} → ${item.to}` : 
+                  category === 'flights' && item.flight_origin && item.flight_destination ? 
+                  `${item.flight_origin} → ${item.flight_destination}` : undefined),
+        price: item.price || item[`${category.slice(0, -1)}_price`] || undefined,
+        description: item.description || item[`${category.slice(0, -1)}_description`] || 
+                   (category === 'commute' ? `${item.mode} transportation` : undefined),
+        duration: item.duration || item[`${category.slice(0, -1)}_duration`] || 
+                 (category === 'commute' && item.departure_time && item.arrival_time ? 
+                  `${item.departure_time} - ${item.arrival_time}` : 
+                  category === 'flights' ? item.flight_duration : undefined),
+        available: true,
+        tier: [selectedTier],
+        // Flight specific data
+        departureTime: item.departure_time || item[`${category.slice(0, -1)}_departure_time`] || item.flight_time,
+        arrivalTime: item.arrival_time || item[`${category.slice(0, -1)}_arrival_time`],
+        airline: item.airline || item[`${category.slice(0, -1)}_airline`] || (item.flight_name ? item.flight_name.split(' ')[0] : undefined),
+        flightNumber: item.flight_number || item[`${category.slice(0, -1)}_number`] || item.flight_name,
+        // Hotel specific data
+        checkIn: item.check_in || item[`${category.slice(0, -1)}_check_in`] || item.hotel_check_in_date,
+        checkOut: item.check_out || item[`${category.slice(0, -1)}_check_out`] || item.hotel_check_out_date,
+        roomType: item.room_type || item[`${category.slice(0, -1)}_room_type`] || item.hotel_room_type,
+        amenities: item.amenities || item[`${category.slice(0, -1)}_amenities`],
+        // Restaurant specific data
+        cuisine: item.cuisine || item[`${category.slice(0, -1)}_cuisine`],
+        dressCode: item.dress_code || item[`${category.slice(0, -1)}_dress_code`],
+        time: item.time || item[`${category.slice(0, -1)}_time`],
+        // Activity specific data
+        groupSize: item.group_size || item[`${category.slice(0, -1)}_group_size`],
+        difficulty: item.difficulty || item[`${category.slice(0, -1)}_difficulty`]
+      };
+      allItems.push(bookingItem);
     });
     
-    // 2. Add upsell options of the target type
-    upsellOptions
-      .filter(option => option.upsell_type === targetType)
-      .forEach((upsellItem, index) => {
-        const bookingItem: BookingItem = {
-          id: `upsell-${targetType}-${index}`,
-          type: upsellItem.upsell_type as 'flight' | 'hotel' | 'activity' | 'restaurant',
-          name: upsellItem.upsell_name,
-          price: upsellItem.upsell_price,
-          features: upsellItem.upsell_benefits,
-          available: true,
-          tier: [selectedTier],
-          description: `Upgrade option: ${upsellItem.upsell_benefits.join(', ')}`
-        };
-        
-        allItems.push(bookingItem);
-      });
+    // Note: Upsell options are displayed separately in the upsell section below
+    // They are not added to the main items list to avoid duplication
     
+    console.log(`Total items found for ${category}:`, allItems.length);
     return allItems;
   };
 
   const bookingItems = getBookingItems();
 
   const categoryInfo = {
-    flights: { icon: <Plane className="w-4 h-4" />, color: 'bg-primary', title: 'Flight Options' },
-    hotels: { icon: <Hotel className="w-4 h-4" />, color: 'bg-success', title: 'Hotel Options' },
-    activities: { icon: <span className="text-sm">🎯</span>, color: 'bg-warning', title: 'Activity Options' },
-    dining: { icon: <Utensils className="w-4 h-4" />, color: 'bg-primary/80', title: 'Dining Options' }
+    flights: { icon: <Plane className="w-4 h-4 stroke-1" />, color: '', title: 'Flight Options' },
+    hotels: { icon: <Hotel className="w-4 h-4 stroke-1" />, color: '', title: 'Hotel Options' },
+    activities: { icon: <span className="text-sm">🎯</span>, color: '', title: 'Activity Options' },
+    dining: { icon: <Utensils className="w-4 h-4 stroke-1" />, color: '', title: 'Dining Options' },
+    commute: { icon: <Car className="w-4 h-4 stroke-1" />, color: '', title: 'Commute Options' }
   };
 
   const currentCategory = categoryInfo[category];
 
-  const items = bookingItems;
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+      <div className="flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          className="flex items-center gap-2 cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
-          <div className={`w-8 h-8 rounded-full ${currentCategory.color} text-white flex items-center justify-center`}>
+        <div className="flex items-center gap-3">
             {currentCategory.icon}
-          </div>
           <div>
-            <h2 className="text-base font-semibold">{currentCategory.title}</h2>
+            <h1 className="text-2xl font-bold text-foreground">{currentCategory.title}</h1>
+            <p className="text-muted-foreground">Available options for {destination}</p>
           </div>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="text-sm">
-            {selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} Tier
-          </Badge>
         </div>
       </div>
 
-
-      {/* Booking Items Grid or Empty State */}
-      <div className="grid gap-3">
-        {items.length === 0 ? (
-          <Card className="border border-gray-200">
-            <CardContent className="p-8 text-center">
-              <div className={`inline-flex p-3 rounded-full ${currentCategory.color} text-white mb-4`}>
-                {currentCategory.icon}
+      {/* Items Grid */}
+      {bookingItems.length === 0 ? (
+        <Card className="p-8 text-center">
+          <CardContent>
+            <div className="text-muted-foreground mb-4">
+              <div className="text-6xl mb-4">📋</div>
+              <h3 className="text-lg font-semibold mb-2">No {category} available</h3>
+              <p>There are currently no {category} options available for this tier.</p>
         </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No {currentCategory.title.toLowerCase()} available
-              </h3>
-              <p className="text-gray-500 mb-4">
-                We're working on adding {category} options for {destination}. 
-                Please check back later or contact our support team.
-              </p>
-              <Button variant="outline" onClick={onBack}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Overview
-              </Button>
             </CardContent>
           </Card>
         ) : (
-          items.map((item) => (
-            <Card key={item.id} className="overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-200 bg-white">
-              <div className="flex h-28">
-                {/* Compact Image with Fallback */}
-                <div className="w-28 h-28 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
-                  {item.image ? (
-                <ImageWithFallback
-                  src={item.image}
-                      alt={item.name || 'Booking item'}
-                  className="w-full h-full object-cover"
-                />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 p-4">
-                      {category === 'flights' && <Plane className="w-4 h-4 text-primary" />}
-                      {category === 'hotels' && <Hotel className="w-4 h-4 text-success" />}
-                      {category === 'activities' && <span className="text-xl">🎯</span>}
-                      {category === 'dining' && <Utensils className="w-4 h-4 text-primary/80" />}
-                    </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {bookingItems.map((item) => (
+                <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <CardContent className="p-0">
+                    {/* Image */}
+                    <div className="h-48 bg-muted relative">
+                      {getFallbackContent()}
+                      {item.available && (
+                        <Badge className="absolute top-2 right-2 bg-success text-success-foreground">
+                          Available
+                        </Badge>
                   )}
               </div>
               
-                {/* Compact Content */}
-                <div className="flex-1 px-4 py-3 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-start mb-1.5">
-                      <div className="flex-1 min-w-0">
-                        {item.name && (
-                          <div className="flex items-center space-x-2">
-                            <h3 className="text-sm font-semibold text-gray-900 truncate">{item.name}</h3>
-                            {item.id.startsWith('upsell-') && (
-                              <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-warning/20 text-warning-foreground">
-                                Upgrade
+                    {/* Content */}
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-foreground line-clamp-2">
+                          {item.name}
+                        </h3>
+                        {/* Only show price if it exists and is greater than 0 */}
+                        {item.price && typeof item.price === 'number' && item.price > 0 && (
+                          <div className="text-right ml-2">
+                            <div className="text-lg font-bold text-primary">
+                              {getFormattedPrice(item.price)}
+                            </div>
+                            {item.originalPrice && item.originalPrice > item.price && (
+                              <div className="text-sm text-muted-foreground line-through">
+                                {getFormattedPrice(item.originalPrice)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                          {item.location && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+                          <MapPin className="w-3 h-3" />
+                          <div className="flex items-center gap-2">
+                            {typeof item.location === 'string' ? (
+                              <span className="line-clamp-1">{item.location}</span>
+                            ) : typeof item.location === 'object' && 
+                                 item.location && 
+                                 (item.location as any).latitude && 
+                                 (item.location as any).longitude ? (
+                              <button
+                                onClick={() => openInGoogleMaps((item.location as any).latitude, (item.location as any).longitude)}
+                                className="text-blue-600 hover:text-blue-800 underline text-xs font-medium cursor-pointer"
+                              >
+                                Open in Google Maps
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      )}
+
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {item.description}
+                        </p>
+                      )}
+
+                      {/* Category-specific details */}
+                      {category === 'flights' && (
+                        <div className="space-y-2 mb-3">
+                          {item.departureTime && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Clock className="w-4 h-4" />
+                              <span>{item.departureTime}</span>
+                            </div>
+                          )}
+                          {item.duration && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Clock className="w-4 h-4" />
+                              <span>{item.duration}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {category === 'hotels' && (
+                        <div className="space-y-2 mb-3">
+                          {item.roomType && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Hotel className="w-4 h-4" />
+                              <span>{item.roomType}</span>
+                            </div>
+                          )}
+                          {item.checkIn && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="w-4 h-4" />
+                              <span>Check-in: {item.checkIn}</span>
+                            </div>
+                          )}
+                          {item.checkOut && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="w-4 h-4" />
+                              <span>Check-out: {item.checkOut}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {category === 'activities' && (
+                        <div className="space-y-2 mb-3">
+                          {item.duration && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Clock className="w-4 h-4" />
+                              <span>{item.duration}</span>
+                            </div>
+                          )}
+                          {item.difficulty && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Star className="w-4 h-4" />
+                              <span>{item.difficulty}</span>
+                            </div>
+                          )}
+                          {item.groupSize && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Users className="w-4 h-4" />
+                              <span>{item.groupSize}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {category === 'dining' && (
+                        <div className="space-y-2 mb-3">
+                          {item.cuisine && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Utensils className="w-4 h-4" />
+                              <span>{item.cuisine}</span>
+                            </div>
+                          )}
+                          {item.time && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Clock className="w-4 h-4" />
+                              <span>{item.time}</span>
+                            </div>
+                          )}
+                          {item.dressCode && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Star className="w-4 h-4" />
+                              <span>{item.dressCode}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {category === 'commute' && (
+                        <div className="space-y-2 mb-3">
+                          {item.duration && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Clock className="w-4 h-4" />
+                              <span>{item.duration}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Features */}
+                      {item.features && item.features.length > 0 && (
+                        <div className="mb-3">
+                          <div className="flex flex-wrap gap-1">
+                            {item.features.slice(0, 3).map((feature, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {feature}
+                              </Badge>
+                            ))}
+                            {item.features.length > 3 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{item.features.length - 3} more
                               </Badge>
                             )}
                           </div>
-                        )}
-                        <div className="flex items-center space-x-2 text-xs text-gray-500 mt-0.5">
-                          {item.location && (
-                      <div className="flex items-center space-x-1">
-                              <MapPin className="w-2.5 h-2.5" />
-                              <span className="truncate">{item.location}</span>
-                      </div>
-                          )}
-                      {item.departureTime && (
-                        <div className="flex items-center space-x-1">
-                              <Clock className="w-2.5 h-2.5" />
-                              <span>{item.departureTime}</span>
                         </div>
                       )}
-                      {item.duration && (
-                        <div className="flex items-center space-x-1">
-                              <Clock className="w-2.5 h-2.5" />
-                          <span>{item.duration}</span>
-                        </div>
-                      )}
+
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+        
+            {/* Upsell Options Section - only show if there are filtered upsells */}
+            {(() => {
+              const filteredUpsells = upsellOptions?.filter(upsell => {
+                if (category === 'flights') return upsell.upsell_type === 'flight';
+                if (category === 'hotels') return upsell.upsell_type === 'hotel';
+                if (category === 'activities') return upsell.upsell_type === 'activity';
+                if (category === 'dining') return upsell.upsell_type === 'restaurant';
+                if (category === 'commute') return false; // No commute upsells in current data
+                return false;
+              }) || [];
+              
+              return filteredUpsells.length > 0 ? (
+                <div className="mt-12">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground mb-1">Upgrade Your Experience</h3>
+                      <p className="text-muted-foreground">Enhance your trip with these premium options</p>
                     </div>
                   </div>
                   
-                      <div className="text-right ml-3">
-                        {item.price && (
-                      <div className="flex items-center space-x-1">
-                            {item.originalPrice && (
-                              <span className="text-xs text-gray-400 line-through">
-                                {getFormattedPrice(item.originalPrice)}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredUpsells.map((upsell, index) => (
+                      <div key={`upsell-${index}`} className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 flex items-center justify-center">
+                              <span className="text-lg">
+                                {upsell.upsell_type === 'flight' && '✈️'}
+                                {upsell.upsell_type === 'hotel' && '🏨'}
+                                {upsell.upsell_type === 'activity' && '🎯'}
+                                {upsell.upsell_type === 'restaurant' && '🍽️'}
+                                {upsell.upsell_type === 'transport' && '🚗'}
                               </span>
-                            )}
-                            <span className="text-sm font-bold text-gray-900">
-                              {getFormattedPrice(item.price)}
-                            </span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-foreground">{upsell.upsell_name}</h4>
+                              <p className="text-sm text-muted-foreground capitalize">{upsell.upsell_type}</p>
+                            </div>
                           </div>
-                        )}
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-primary">
+                              ${upsell.upsell_price}
+                            </div>
+                            <div className="text-xs text-muted-foreground">per person</div>
                       </div>
                     </div>
                     
-                    {item.description && (
-                      <p className="text-xs text-gray-600 line-clamp-2 mb-1.5">{item.description}</p>
+                        {upsell.upsell_description && (
+                          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                            {upsell.upsell_description}
+                          </p>
+                        )}
+                        
+                        {upsell.upsell_benefits && upsell.upsell_benefits.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex flex-wrap gap-2">
+                              {upsell.upsell_benefits.slice(0, 3).map((benefit, benefitIndex) => (
+                                <span 
+                                  key={benefitIndex}
+                                  className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full"
+                                >
+                                  {benefit}
+                                </span>
+                              ))}
+                              {upsell.upsell_benefits.length > 3 && (
+                                <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full">
+                                  +{upsell.upsell_benefits.length - 3} more
+                                </span>
                     )}
                 </div>
-
-                  {/* Compact Features Only */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-1 flex-1">
-                      {item.features && item.features.length > 0 && (
-                        <>
-                          {item.features.slice(0, 2).map((feature, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 border-0">
-                      {feature}
-                    </Badge>
-                  ))}
-                          {item.features.length > 2 && (
-                            <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 border-0">
-                              +{item.features.length - 2}
-                            </Badge>
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-2">
+                          <button className="flex-1 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors">
+                            Coming soon...
+                          </button>
+                          {upsell.upsell_link && (
+                            <button className="px-4 py-2 border border-border text-sm font-medium rounded-lg hover:bg-muted transition-colors">
+                              Learn More
+                            </button>
                           )}
-                        </>
-                      )}
+                        </div>
+                  </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </div>
-          </Card>
-          ))
+              ) : null;
+            })()}
+        </>
         )}
-      </div>
     </div>
   );
 };

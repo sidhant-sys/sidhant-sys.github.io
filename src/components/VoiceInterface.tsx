@@ -42,7 +42,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
           <Button
             size="lg"
             variant={isListening ? "default" : "outline"}
-            className="w-20 h-20 rounded-full"
+            className="w-20 h-20 rounded-full cursor-pointer"
             onClick={onToggleListening}
           >
             {isListening ? (
@@ -97,7 +97,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({
               onVoiceInput(prompt);
               simulateVoiceResponse();
             }}
-            className="text-xs"
+            className="cursor-pointer text-xs"
           >
             "{prompt}"
           </Button>

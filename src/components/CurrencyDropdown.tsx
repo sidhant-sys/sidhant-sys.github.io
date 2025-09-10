@@ -49,7 +49,7 @@ export const CurrencyDropdown: React.FC<CurrencyDropdownProps> = ({
           text-foreground font-medium 
           transition-all duration-200 
           focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-          min-w-[80px]
+          min-w-[80px] cursor-pointer
         `}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
@@ -92,7 +92,7 @@ export const CurrencyDropdown: React.FC<CurrencyDropdownProps> = ({
                   className={`
                     w-full px-3 py-2 text-left text-sm 
                     hover:bg-muted/50 transition-colors duration-150
-                    flex items-center justify-between
+                    flex items-center justify-between cursor-pointer
                     ${currentCurrency.code === currency.code 
                       ? 'bg-muted text-foreground font-medium' 
                       : 'text-muted-foreground hover:text-foreground'

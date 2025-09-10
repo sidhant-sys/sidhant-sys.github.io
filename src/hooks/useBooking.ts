@@ -32,14 +32,14 @@ export const useBooking = (options: UseBookingOptions = {}) => {
 
       // Map tier types to API class types
       const classTypeMapping: Record<TierType, BookingRequest['classType']> = {
-        'economy': 'budgeted', // Map economy to budgeted for API
+        'budgeted': 'budgeted',
         'premium': 'premium', 
         'luxury': 'luxury'
       };
 
       const bookingRequest: BookingRequest = {
         itineraryId,
-        classType: classTypeMapping[classType] || 'economy'
+        classType: classTypeMapping[classType] || 'budgeted'
       };
 
       const response = await createBooking(bookingRequest);

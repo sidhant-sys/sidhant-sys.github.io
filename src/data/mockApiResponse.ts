@@ -2,7 +2,7 @@ import { ItineraryApiResponse } from '../types/api';
 
 // Mock API response based on the provided example
 export const mockItineraryResponse: ItineraryApiResponse = {
-  "id": "68beccdb8caa071934803d49",
+  "id": "68bf29b95d72232d61dbba55",
   "from": "Mumbai",
   "to": "New York",
   "fromIata": "BOM",
@@ -22,13 +22,13 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "kids": 0
         },
         "duration": "7 days, 6 nights",
-        "total_cost": 1756.72,
+        "total_cost": 2358.72,
         "cost_breakdown": {
           "flights": 854.27,
-          "hotels": 581.25,
+          "hotels": 517.5,
           "activities": 39,
-          "meals": 200,
-          "commute": 82
+          "meals": 450,
+          "commute": 497.95
         }
       },
       "flights": [
@@ -46,7 +46,7 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "flight_origin": "JFK",
           "flight_destination": "BOM",
           "flight_duration": "14h 55m",
-          "flight_price": 854.27,
+          "flight_price": 0,
           "flight_date": "2025-10-18",
           "flight_time": "11:10"
         }
@@ -54,36 +54,34 @@ export const mockItineraryResponse: ItineraryApiResponse = {
       "hotels": [
         {
           "hotel_name": "Budget Inn JFK",
-          "hotel_address": "123 Mock Street, Unknown City",
-          "hotel_room_type": "Standard Room",
-          "hotel_hotel_class": "2",
-          "hotel_price": 72.25,
+          "hotel_address": "123 Mock Street, Unknown City, XX",
+          "hotel_room_type": "Standard Room with King Bed",
+          "hotel_hotel_class": "2-star",
+          "hotel_price": 517.5,
           "hotel_check_in_date": "2025-10-01",
           "hotel_check_out_date": "2025-10-18"
         }
       ],
       "upsell": [
         {
-          "upsell_type": "flight",
-          "upsell_name": "Premium Economy Flight Upgrade",
-          "upsell_price": 345.73,
+          "upsell_type": "hotel",
+          "upsell_name": "Upgrade to Grand JFK Hotel",
+          "upsell_price": 1125,
           "upsell_benefits": [
-            "More legroom",
-            "Better meals"
+            "Upgrade to a 4-star hotel with better amenities and services."
           ],
-          "upsell_description": "Upgrade your flight to premium economy for enhanced comfort.",
-          "upsell_link": ""
+          "upsell_description": "Enjoy a more comfortable stay at the Grand JFK Hotel.",
+          "upsell_link": null
         },
         {
-          "upsell_type": "hotel",
-          "upsell_name": "Mid-Range Hotel Upgrade",
-          "upsell_price": 85,
+          "upsell_type": "flight",
+          "upsell_name": "Upgrade to Premium Economy",
+          "upsell_price": 370.73,
           "upsell_benefits": [
-            "Better amenities",
-            "Improved location"
+            "More legroom and comfortable seating"
           ],
-          "upsell_description": "Upgrade to a mid-range hotel for a more comfortable stay.",
-          "upsell_link": ""
+          "upsell_description": "Enjoy a more comfortable flight with extra legroom and amenities.",
+          "upsell_link": null
         }
       ],
       "days": [
@@ -93,12 +91,11 @@ export const mockItineraryResponse: ItineraryApiResponse = {
             {
               "type": "flight",
               "flight_name": "AI 119",
-              "flight_origin": "BOM",
-              "flight_destination": "JFK",
-              "flight_duration": "15h 45m",
+              "from": "BOM",
+              "to": "JFK",
               "departure_time": "01:40",
               "arrival_time": "07:55",
-              "price": ""
+              "price": 854.27
             },
             {
               "type": "commute",
@@ -107,13 +104,12 @@ export const mockItineraryResponse: ItineraryApiResponse = {
               "mode": "Taxi",
               "departure_time": "09:00",
               "arrival_time": "10:00",
-              "price": 40
+              "price": 50
             },
             {
               "type": "hotel",
               "name": "Budget Inn JFK",
-              "check_in_time": "11:00",
-              "price": ""
+              "check_in": "10:00"
             }
           ]
         },
@@ -123,22 +119,14 @@ export const mockItineraryResponse: ItineraryApiResponse = {
             {
               "type": "activity",
               "name": "London Theatre: Disney's Hercules",
-              "description": null,
               "location": {
                 "longitude": -0.1198823,
                 "latitude": 51.5124056
               },
+              "description": null,
               "start_time": "14:00",
               "end_time": "17:00",
-              "price": 39,
-              "bookingUrl": "https://amadeus.booking.holibob.tech/product/ec359c7a-cb9d-431e-bf1a-39cd037a0bee"
-            },
-            {
-              "type": "meal",
-              "name": "Dinner at Local Restaurant",
-              "location": "Near Hotel",
-              "time": "19:00",
-              "price": 50
+              "price": 39
             }
           ]
         },
@@ -147,23 +135,9 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "schedule": [
             {
               "type": "meal",
-              "name": "Breakfast at hotel",
-              "time": "08:00",
-              "price": 20
-            },
-            {
-              "type": "activity",
-              "name": "Exploring New York",
-              "start_time": "10:00",
-              "end_time": "16:00",
-              "price": 0,
-              "details": "Explore famous New York landmarks"
-            },
-            {
-              "type": "meal",
-              "name": "Dinner at Local Restaurant",
+              "name": "Lunch at Local Diner",
               "location": "Near Hotel",
-              "time": "19:00",
+              "time": "13:00",
               "price": 50
             }
           ]
@@ -173,24 +147,10 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "schedule": [
             {
               "type": "meal",
-              "name": "Breakfast at hotel",
-              "time": "08:00",
-              "price": 20
-            },
-            {
-              "type": "activity",
-              "name": "Visit Museums",
-              "start_time": "10:00",
-              "end_time": "16:00",
-              "price": 0,
-              "details": "Visit popular museums"
-            },
-            {
-              "type": "meal",
-              "name": "Dinner at Local Restaurant",
+              "name": "Dinner at Budget Restaurant",
               "location": "Near Hotel",
               "time": "19:00",
-              "price": 50
+              "price": 60
             }
           ]
         },
@@ -198,25 +158,20 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "day": 5,
           "schedule": [
             {
-              "type": "meal",
-              "name": "Breakfast at hotel",
-              "time": "08:00",
-              "price": 20
+              "type": "commute",
+              "from": "Hotel",
+              "to": "Times Square",
+              "mode": "Subway",
+              "departure_time": "10:00",
+              "arrival_time": "11:00",
+              "price": 5.95
             },
             {
               "type": "activity",
-              "name": "Shopping",
-              "start_time": "10:00",
-              "end_time": "16:00",
-              "price": 0,
-              "details": "Enjoy shopping"
-            },
-            {
-              "type": "meal",
-              "name": "Dinner at Local Restaurant",
-              "location": "Near Hotel",
-              "time": "19:00",
-              "price": 50
+              "name": "Explore Times Square",
+              "start_time": "11:00",
+              "end_time": "14:00",
+              "price": 0
             }
           ]
         },
@@ -224,19 +179,20 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "day": 6,
           "schedule": [
             {
-              "type": "meal",
-              "name": "Breakfast at hotel",
-              "time": "08:00",
-              "price": 20
+              "type": "commute",
+              "from": "Hotel",
+              "to": "Central Park",
+              "mode": "Subway",
+              "departure_time": "10:00",
+              "arrival_time": "11:00",
+              "price": 5.95
             },
             {
-              "type": "commute",
-              "from": "Budget Inn JFK",
-              "to": "JFK Airport",
-              "mode": "Taxi",
-              "departure_time": "09:00",
-              "arrival_time": "10:00",
-              "price": 42
+              "type": "activity",
+              "name": "Explore Central Park",
+              "start_time": "11:00",
+              "end_time": "17:00",
+              "price": 0
             }
           ]
         },
@@ -244,14 +200,22 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "day": 7,
           "schedule": [
             {
+              "type": "commute",
+              "from": "Budget Inn JFK",
+              "to": "JFK Airport",
+              "mode": "Taxi",
+              "departure_time": "07:00",
+              "arrival_time": "08:00",
+              "price": 50
+            },
+            {
               "type": "flight",
               "flight_name": "AI 197",
-              "flight_origin": "JFK",
-              "flight_destination": "BOM",
-              "flight_duration": "14h 55m",
+              "from": "JFK",
+              "to": "BOM",
               "departure_time": "11:10",
               "arrival_time": "11:35",
-              "price": ""
+              "price": 0
             }
           ]
         }
@@ -265,13 +229,13 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "kids": 0
         },
         "duration": "7 days, 6 nights",
-        "total_cost": 2761.72,
+        "total_cost": 3629.72,
         "cost_breakdown": {
           "flights": 1225,
-          "hotels": 1221.25,
+          "hotels": 1125,
           "activities": 39,
-          "meals": 200,
-          "commute": 76.47
+          "meals": 742.77,
+          "commute": 497.95
         }
       },
       "flights": [
@@ -283,52 +247,39 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "flight_price": 1200,
           "flight_date": "2025-10-01",
           "flight_time": "10:00"
-        },
-        {
-          "flight_name": "6E MOCK123",
-          "flight_origin": "JFK",
-          "flight_destination": "BOM",
-          "flight_duration": "8h 30m",
-          "flight_price": 1200,
-          "flight_date": "2025-10-18",
-          "flight_time": "10:00"
         }
       ],
       "hotels": [
         {
           "hotel_name": "Grand JFK Hotel",
-          "hotel_address": "123 Mock Street, Unknown City",
-          "hotel_room_type": "Standard Room",
-          "hotel_hotel_class": "4",
-          "hotel_price": 157.25,
+          "hotel_address": "123 Mock Street, Unknown City, XX",
+          "hotel_room_type": "Standard Room with King Bed",
+          "hotel_hotel_class": "4-star",
+          "hotel_price": 1125,
           "hotel_check_in_date": "2025-10-01",
           "hotel_check_out_date": "2025-10-18"
         }
       ],
       "upsell": [
         {
-          "upsell_type": "flight",
-          "upsell_name": "Business Class Flight Upgrade",
-          "upsell_price": 2092.57,
+          "upsell_type": "hotel",
+          "upsell_name": "Upgrade to Luxury Palace JFK",
+          "upsell_price": 2100,
           "upsell_benefits": [
-            "Lie-flat seats",
-            "Gourmet meals",
-            "Lounge access"
+            "Upgrade to a 5-star hotel with premium amenities and services."
           ],
-          "upsell_description": "Experience ultimate luxury with a business class upgrade.",
-          "upsell_link": ""
+          "upsell_description": "Indulge in a luxurious stay at the Luxury Palace JFK with top-notch amenities and personalized service.",
+          "upsell_link": null
         },
         {
-          "upsell_type": "hotel",
-          "upsell_name": "Luxury Hotel Upgrade",
-          "upsell_price": 140,
+          "upsell_type": "flight",
+          "upsell_name": "Upgrade to Business Class",
+          "upsell_price": 1175,
           "upsell_benefits": [
-            "Premium amenities",
-            "Exclusive services",
-            "Top-notch location"
+            "Lie-flat seats, gourmet meals, and exclusive lounge access"
           ],
-          "upsell_description": "Indulge in a luxurious stay at a premium hotel.",
-          "upsell_link": ""
+          "upsell_description": "Experience the ultimate comfort and service in Business Class with lie-flat seats, gourmet meals, and exclusive lounge access.",
+          "upsell_link": null
         }
       ],
       "days": [
@@ -338,12 +289,11 @@ export const mockItineraryResponse: ItineraryApiResponse = {
             {
               "type": "flight",
               "flight_name": "6E MOCK123",
-              "flight_origin": "BOM",
-              "flight_destination": "JFK",
-              "flight_duration": "8h 30m",
+              "from": "BOM",
+              "to": "JFK",
               "departure_time": "10:00",
               "arrival_time": "18:30",
-              "price": ""
+              "price": 1200
             },
             {
               "type": "commute",
@@ -352,13 +302,12 @@ export const mockItineraryResponse: ItineraryApiResponse = {
               "mode": "Taxi",
               "departure_time": "19:30",
               "arrival_time": "20:30",
-              "price": 35
+              "price": 50
             },
             {
               "type": "hotel",
               "name": "Grand JFK Hotel",
-              "check_in_time": "21:00",
-              "price": ""
+              "check_in": "20:30"
             }
           ]
         },
@@ -368,22 +317,14 @@ export const mockItineraryResponse: ItineraryApiResponse = {
             {
               "type": "activity",
               "name": "London Theatre: Disney's Hercules",
-              "description": null,
               "location": {
                 "longitude": -0.1198823,
                 "latitude": 51.5124056
               },
+              "description": null,
               "start_time": "14:00",
               "end_time": "17:00",
-              "price": 39,
-              "bookingUrl": "https://amadeus.booking.holibob.tech/product/ec359c7a-cb9d-431e-bf1a-39cd037a0bee"
-            },
-            {
-              "type": "meal",
-              "name": "Dinner at Local Restaurant",
-              "location": "Near Hotel",
-              "time": "19:00",
-              "price": 50
+              "price": 39
             }
           ]
         },
@@ -392,24 +333,10 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "schedule": [
             {
               "type": "meal",
-              "name": "Breakfast at hotel",
-              "time": "08:00",
-              "price": 20
-            },
-            {
-              "type": "activity",
-              "name": "Exploring New York",
-              "start_time": "10:00",
-              "end_time": "16:00",
-              "price": 0,
-              "details": "Explore famous New York landmarks"
-            },
-            {
-              "type": "meal",
-              "name": "Dinner at Local Restaurant",
+              "name": "Lunch at Mid-Range Restaurant",
               "location": "Near Hotel",
-              "time": "19:00",
-              "price": 50
+              "time": "13:00",
+              "price": 75
             }
           ]
         },
@@ -418,24 +345,10 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "schedule": [
             {
               "type": "meal",
-              "name": "Breakfast at hotel",
-              "time": "08:00",
-              "price": 20
-            },
-            {
-              "type": "activity",
-              "name": "Visit Museums",
-              "start_time": "10:00",
-              "end_time": "16:00",
-              "price": 0,
-              "details": "Visit popular museums"
-            },
-            {
-              "type": "meal",
-              "name": "Dinner at Local Restaurant",
+              "name": "Dinner at Premium Restaurant",
               "location": "Near Hotel",
               "time": "19:00",
-              "price": 50
+              "price": 100
             }
           ]
         },
@@ -443,25 +356,20 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "day": 5,
           "schedule": [
             {
-              "type": "meal",
-              "name": "Breakfast at hotel",
-              "time": "08:00",
-              "price": 20
+              "type": "commute",
+              "from": "Hotel",
+              "to": "Times Square",
+              "mode": "Subway",
+              "departure_time": "10:00",
+              "arrival_time": "11:00",
+              "price": 5.95
             },
             {
               "type": "activity",
-              "name": "Shopping",
-              "start_time": "10:00",
-              "end_time": "16:00",
-              "price": 0,
-              "details": "Enjoy shopping"
-            },
-            {
-              "type": "meal",
-              "name": "Dinner at Local Restaurant",
-              "location": "Near Hotel",
-              "time": "19:00",
-              "price": 50
+              "name": "Explore Times Square",
+              "start_time": "11:00",
+              "end_time": "14:00",
+              "price": 0
             }
           ]
         },
@@ -469,19 +377,20 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "day": 6,
           "schedule": [
             {
-              "type": "meal",
-              "name": "Breakfast at hotel",
-              "time": "08:00",
-              "price": 20
+              "type": "commute",
+              "from": "Hotel",
+              "to": "Central Park",
+              "mode": "Subway",
+              "departure_time": "10:00",
+              "arrival_time": "11:00",
+              "price": 5.95
             },
             {
-              "type": "commute",
-              "from": "Grand JFK Hotel",
-              "to": "JFK Airport",
-              "mode": "Taxi",
-              "departure_time": "09:00",
-              "arrival_time": "10:00",
-              "price": 41.47
+              "type": "activity",
+              "name": "Explore Central Park",
+              "start_time": "11:00",
+              "end_time": "17:00",
+              "price": 0
             }
           ]
         },
@@ -489,14 +398,22 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "day": 7,
           "schedule": [
             {
+              "type": "commute",
+              "from": "Grand JFK Hotel",
+              "to": "JFK Airport",
+              "mode": "Taxi",
+              "departure_time": "07:00",
+              "arrival_time": "08:00",
+              "price": 50
+            },
+            {
               "type": "flight",
-              "flight_name": "6E MOCK123",
-              "flight_origin": "JFK",
-              "flight_destination": "BOM",
-              "flight_duration": "8h 30m",
-              "departure_time": "10:00",
-              "arrival_time": "18:30",
-              "price": ""
+              "flight_name": "AI 197",
+              "from": "JFK",
+              "to": "BOM",
+              "departure_time": "11:10",
+              "arrival_time": "11:35",
+              "price": 0
             }
           ]
         }
@@ -510,165 +427,233 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "kids": 0
         },
         "duration": "7 days, 6 nights",
-        "total_cost": 4504.34,
+        "total_cost": 5204.72,
         "cost_breakdown": {
-          "flights": 3317.57,
-          "hotels": 873.75,
+          "flights": 2400,
+          "hotels": 2100,
           "activities": 39,
-          "meals": 200,
-          "commute": 74
+          "meals": 168.77,
+          "commute": 497.95
         }
       },
       "flights": [
         {
-          "flight_name": "AI 119",
+          "flight_name": "EK MOCK123",
           "flight_origin": "BOM",
           "flight_destination": "JFK",
-          "flight_duration": "15h 45m",
-          "flight_price": 3317.57,
+          "flight_duration": "8h 30m",
+          "flight_price": 2400,
           "flight_date": "2025-10-01",
-          "flight_time": "01:40"
-        },
-        {
-          "flight_name": "AI 1330/AI 2421",
-          "flight_origin": "JFK",
-          "flight_destination": "BOM",
-          "flight_duration": "9h 20m",
-          "flight_price": 3317.57,
-          "flight_date": "2025-10-18",
           "flight_time": "10:00"
         }
       ],
       "hotels": [
         {
           "hotel_name": "Luxury Palace JFK",
-          "hotel_address": "123 Mock Street, Unknown City",
-          "hotel_room_type": "Standard Room",
-          "hotel_hotel_class": "5",
-          "hotel_price": 297.5,
+          "hotel_address": "123 Mock Street, Unknown City, XX",
+          "hotel_room_type": "Standard Room with King Bed",
+          "hotel_hotel_class": "5-star",
+          "hotel_price": 2100,
           "hotel_check_in_date": "2025-10-01",
           "hotel_check_out_date": "2025-10-18"
         }
       ],
       "upsell": [
         {
-          "upsell_type": "activity",
-          "upsell_name": "Private City Tour",
-          "upsell_price": 500,
+          "upsell_type": "hotel",
+          "upsell_name": "Upgrade to a Suite",
+          "upsell_price": 1500,
           "upsell_benefits": [
-            "Personalized experience",
-            "Skip-the-line access"
+            "Enjoy a spacious suite with separate living and sleeping areas, premium amenities and personalized service."
           ],
-          "upsell_description": "Enjoy a private tour of New York City with a dedicated guide.",
-          "upsell_link": ""
+          "upsell_description": "Experience ultimate luxury in a suite at the Luxury Palace JFK.",
+          "upsell_link": null
         },
         {
-          "upsell_type": "hotel",
-          "upsell_name": "Suite Upgrade",
-          "upsell_price": 1000,
+          "upsell_type": "activity",
+          "upsell_name": "Private Broadway Show Experience",
+          "upsell_price": 500,
           "upsell_benefits": [
-            "More space",
-            "Exclusive amenities",
-            "Butler service"
+            "Enjoy a private box at a Broadway show with dedicated service and champagne."
           ],
-          "upsell_description": "Upgrade to a luxurious suite for an unforgettable stay.",
-          "upsell_link": ""
+          "upsell_description": "Elevate your entertainment experience with a private Broadway show experience.",
+          "upsell_link": null
         }
       ],
-      "days": []
+      "days": [
+        {
+          "day": 1,
+          "schedule": [
+            {
+              "type": "flight",
+              "flight_name": "EK MOCK123",
+              "from": "BOM",
+              "to": "JFK",
+              "departure_time": "10:00",
+              "arrival_time": "18:30",
+              "price": 2400
+            },
+            {
+              "type": "commute",
+              "from": "JFK Airport",
+              "to": "Luxury Palace JFK",
+              "mode": "Taxi",
+              "departure_time": "19:30",
+              "arrival_time": "20:30",
+              "price": 50
+            },
+            {
+              "type": "hotel",
+              "name": "Luxury Palace JFK",
+              "check_in": "20:30"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "schedule": [
+            {
+              "type": "activity",
+              "name": "London Theatre: Disney's Hercules",
+              "location": {
+                "longitude": -0.1198823,
+                "latitude": 51.5124056
+              },
+              "description": null,
+              "start_time": "14:00",
+              "end_time": "17:00",
+              "price": 39
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "schedule": [
+            {
+              "type": "meal",
+              "name": "Lunch at Fine Dining Restaurant",
+              "location": "Near Hotel",
+              "time": "13:00",
+              "price": 100
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "schedule": [
+            {
+              "type": "meal",
+              "name": "Dinner at Luxury Restaurant",
+              "location": "Manhattan",
+              "time": "19:00",
+              "price": 150
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "schedule": [
+            {
+              "type": "commute",
+              "from": "Hotel",
+              "to": "Times Square",
+              "mode": "Subway",
+              "departure_time": "10:00",
+              "arrival_time": "11:00",
+              "price": 5.95
+            },
+            {
+              "type": "activity",
+              "name": "Explore Times Square",
+              "start_time": "11:00",
+              "end_time": "14:00",
+              "price": 0
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "schedule": [
+            {
+              "type": "commute",
+              "from": "Hotel",
+              "to": "Central Park",
+              "mode": "Subway",
+              "departure_time": "10:00",
+              "arrival_time": "11:00",
+              "price": 5.95
+            },
+            {
+              "type": "activity",
+              "name": "Explore Central Park",
+              "start_time": "11:00",
+              "end_time": "17:00",
+              "price": 0
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "schedule": [
+            {
+              "type": "commute",
+              "from": "Luxury Palace JFK",
+              "to": "JFK Airport",
+              "mode": "Taxi",
+              "departure_time": "07:00",
+              "arrival_time": "08:00",
+              "price": 50
+            },
+            {
+              "type": "flight",
+              "flight_name": "AI 197",
+              "from": "JFK",
+              "to": "BOM",
+              "departure_time": "11:10",
+              "arrival_time": "11:35",
+              "price": 0
+            }
+          ]
+        }
+      ]
     }
   },
   "flightResponse": {
     "business": [
       {
         "type": "flight-offer",
-        "id": "1",
+        "id": "MOCK_BUSINESS_8225",
         "source": "GDS",
         "instantTicketingRequired": false,
         "disablePricing": false,
         "nonHomogeneous": false,
         "oneWay": false,
         "paymentCardRequired": false,
-        "lastTicketingDate": "2025-09-28",
-        "numberOfBookableSeats": 2,
+        "lastTicketingDate": "2025-12-31",
+        "numberOfBookableSeats": 9,
         "itineraries": [
           {
-            "duration": "PT15H45M",
+            "duration": "PT8H30M",
             "segments": [
               {
                 "departure": {
                   "iataCode": "BOM",
-                  "terminal": "2",
-                  "at": "2025-10-01T01:40:00"
+                  "at": "2025-10-01T10:00:00"
                 },
                 "arrival": {
                   "iataCode": "JFK",
-                  "terminal": "4",
-                  "at": "2025-10-01T07:55:00"
+                  "at": "2025-10-01T18:30:00"
                 },
-                "carrierCode": "AI",
-                "number": "119",
+                "carrierCode": "EK",
+                "number": "MOCK123",
                 "aircraft": {
-                  "code": "77W"
+                  "code": "320"
                 },
                 "operating": {
-                  "carrierCode": "AI"
+                  "carrierCode": "EK"
                 },
-                "duration": "PT15H45M",
-                "id": "10",
-                "numberOfStops": 0,
-                "blacklistedInEU": false
-              }
-            ]
-          },
-          {
-            "duration": "PT9H20M",
-            "segments": [
-              {
-                "departure": {
-                  "iataCode": "JFK",
-                  "terminal": "4",
-                  "at": "2025-10-18T10:00:00"
-                },
-                "arrival": {
-                  "iataCode": "DEL",
-                  "terminal": "3",
-                  "at": "2025-10-18T23:00:00"
-                },
-                "carrierCode": "AI",
-                "number": "1330",
-                "aircraft": {
-                  "code": "32N"
-                },
-                "operating": {
-                  "carrierCode": "AI"
-                },
-                "duration": "PT3H30M",
-                "id": "27",
-                "numberOfStops": 0,
-                "blacklistedInEU": false
-              },
-              {
-                "departure": {
-                  "iataCode": "DEL",
-                  "terminal": "3",
-                  "at": "2025-10-19T02:30:00"
-                },
-                "arrival": {
-                  "iataCode": "BOM",
-                  "terminal": "2",
-                  "at": "2025-10-19T04:50:00"
-                },
-                "carrierCode": "AI",
-                "number": "2421",
-                "aircraft": {
-                  "code": "32N"
-                },
-                "operating": {
-                  "carrierCode": "AI"
-                },
-                "duration": "PT2H20M",
-                "id": "28",
+                "duration": "PT8H30M",
+                "id": "1",
                 "numberOfStops": 0,
                 "blacklistedInEU": false
               }
@@ -677,19 +662,15 @@ export const mockItineraryResponse: ItineraryApiResponse = {
         ],
         "price": {
           "currency": "USD",
-          "total": "3317.57",
-          "base": "2566.00",
+          "total": "2400.00",
+          "base": "2375.00",
           "fees": [
             {
-              "amount": "0.00",
+              "amount": "25.00",
               "type": "SUPPLIER"
-            },
-            {
-              "amount": "0.00",
-              "type": "TICKETING"
             }
           ],
-          "grandTotal": "3317.57"
+          "grandTotal": "2425.00"
         },
         "pricingOptions": {
           "includedCheckedBagsOnly": true,
@@ -701,7 +682,7 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "noPenaltyFare": false
         },
         "validatingAirlineCodes": [
-          "AI"
+          "EK"
         ],
         "travelerPricings": [
           {
@@ -710,141 +691,21 @@ export const mockItineraryResponse: ItineraryApiResponse = {
             "travelerType": "ADULT",
             "price": {
               "currency": "USD",
-              "total": "3317.57",
-              "base": "2566.00"
+              "total": "2400.00",
+              "base": "2375.00"
             },
             "fareDetailsBySegment": [
               {
-                "segmentId": "10",
+                "segmentId": "1",
                 "cabin": "BUSINESS",
-                "fareBasis": "ZA2CWSBO",
-                "brandedFare": "BUSCLAS",
-                "class": "Z",
+                "fareBasis": "MOCK123",
+                "brandedFare": "BASIC",
+                "class": "J",
                 "isAllotment": false,
                 "includedCheckedBags": {
-                  "quantity": 2,
+                  "quantity": 1,
                   "weight": 0
-                },
-                "amenities": [
-                  {
-                    "description": "PRE RESERVED SEAT ASSIGNMENT",
-                    "isChargeable": false,
-                    "amenityType": "PRE_RESERVED_SEAT"
-                  },
-                  {
-                    "description": "MEAL SERVICES",
-                    "isChargeable": false,
-                    "amenityType": "MEAL"
-                  },
-                  {
-                    "description": "REFUNDABLE TICKET",
-                    "isChargeable": true,
-                    "amenityType": "BRANDED_FARES"
-                  },
-                  {
-                    "description": "CHANGEABLE TICKET",
-                    "isChargeable": true,
-                    "amenityType": "BRANDED_FARES"
-                  },
-                  {
-                    "description": "UPGRADE",
-                    "isChargeable": true,
-                    "amenityType": "UPGRADES"
-                  },
-                  {
-                    "description": "FREE CHECKED BAGGAGE ALLOWANCE",
-                    "isChargeable": false,
-                    "amenityType": "BRANDED_FARES"
-                  }
-                ]
-              },
-              {
-                "segmentId": "27",
-                "cabin": "BUSINESS",
-                "fareBasis": "ZA2CWSBO",
-                "brandedFare": "BUSCLAS",
-                "class": "Z",
-                "isAllotment": false,
-                "includedCheckedBags": {
-                  "quantity": 2,
-                  "weight": 0
-                },
-                "amenities": [
-                  {
-                    "description": "PRE RESERVED SEAT ASSIGNMENT",
-                    "isChargeable": false,
-                    "amenityType": "PRE_RESERVED_SEAT"
-                  },
-                  {
-                    "description": "MEAL SERVICES",
-                    "isChargeable": false,
-                    "amenityType": "MEAL"
-                  },
-                  {
-                    "description": "REFUNDABLE TICKET",
-                    "isChargeable": true,
-                    "amenityType": "BRANDED_FARES"
-                  },
-                  {
-                    "description": "CHANGEABLE TICKET",
-                    "isChargeable": true,
-                    "amenityType": "BRANDED_FARES"
-                  },
-                  {
-                    "description": "UPGRADE",
-                    "isChargeable": true,
-                    "amenityType": "UPGRADES"
-                  },
-                  {
-                    "description": "FREE CHECKED BAGGAGE ALLOWANCE",
-                    "isChargeable": false,
-                    "amenityType": "BRANDED_FARES"
-                  }
-                ]
-              },
-              {
-                "segmentId": "28",
-                "cabin": "PREMIUM_ECONOMY",
-                "fareBasis": "ZA2CWSBO",
-                "brandedFare": "BUSCLAS",
-                "class": "R",
-                "isAllotment": false,
-                "includedCheckedBags": {
-                  "quantity": 2,
-                  "weight": 0
-                },
-                "amenities": [
-                  {
-                    "description": "PRE RESERVED SEAT ASSIGNMENT",
-                    "isChargeable": false,
-                    "amenityType": "PRE_RESERVED_SEAT"
-                  },
-                  {
-                    "description": "MEAL SERVICES",
-                    "isChargeable": false,
-                    "amenityType": "MEAL"
-                  },
-                  {
-                    "description": "REFUNDABLE TICKET",
-                    "isChargeable": true,
-                    "amenityType": "BRANDED_FARES"
-                  },
-                  {
-                    "description": "CHANGEABLE TICKET",
-                    "isChargeable": true,
-                    "amenityType": "BRANDED_FARES"
-                  },
-                  {
-                    "description": "UPGRADE",
-                    "isChargeable": true,
-                    "amenityType": "UPGRADES"
-                  },
-                  {
-                    "description": "FREE CHECKED BAGGAGE ALLOWANCE",
-                    "isChargeable": false,
-                    "amenityType": "BRANDED_FARES"
-                  }
-                ]
+                }
               }
             ]
           }
@@ -854,7 +715,7 @@ export const mockItineraryResponse: ItineraryApiResponse = {
     "premium_economy": [
       {
         "type": "flight-offer",
-        "id": "MOCK_PREMIUM_ECONOMY_119",
+        "id": "MOCK_PREMIUM_ECONOMY_8299",
         "source": "GDS",
         "instantTicketingRequired": false,
         "disablePricing": false,
@@ -1185,13 +1046,13 @@ export const mockItineraryResponse: ItineraryApiResponse = {
               "paymentType": "GUARANTEE"
             },
             "self": {
-              "href": "https://api.amadeus.com/v3/shopping/hotel-offers/MOCK_OFFER_961"
+              "href": "https://api.amadeus.com/v3/shopping/hotel-offers/MOCK_OFFER_58"
             },
             "rateFamilyEstimated": {
               "type": "P",
               "code": "PRO"
             },
-            "id": "MOCK_OFFER_961",
+            "id": "MOCK_OFFER_58",
             "checkInDate": "2025-10-01",
             "rateCode": "RAC",
             "room": {
@@ -1220,7 +1081,7 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "rating": "4-star",
           "hotelId": "MOCK_HOTEL_MID_RANGE_JFK"
         },
-        "id": "MOCK_MID_RANGE_JFK_8961",
+        "id": "MOCK_MID_RANGE_JFK_7058",
         "type": "hotel-offer"
       }
     ],
@@ -1253,13 +1114,13 @@ export const mockItineraryResponse: ItineraryApiResponse = {
               "paymentType": "GUARANTEE"
             },
             "self": {
-              "href": "https://api.amadeus.com/v3/shopping/hotel-offers/MOCK_OFFER_961"
+              "href": "https://api.amadeus.com/v3/shopping/hotel-offers/MOCK_OFFER_58"
             },
             "rateFamilyEstimated": {
               "type": "P",
               "code": "PRO"
             },
-            "id": "MOCK_OFFER_961",
+            "id": "MOCK_OFFER_58",
             "checkInDate": "2025-10-01",
             "rateCode": "RAC",
             "room": {
@@ -1288,7 +1149,7 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "rating": "5-star",
           "hotelId": "MOCK_HOTEL_LUXURY_JFK"
         },
-        "id": "MOCK_LUXURY_JFK_8961",
+        "id": "MOCK_LUXURY_JFK_7058",
         "type": "hotel-offer"
       }
     ],
@@ -1321,13 +1182,13 @@ export const mockItineraryResponse: ItineraryApiResponse = {
               "paymentType": "GUARANTEE"
             },
             "self": {
-              "href": "https://api.amadeus.com/v3/shopping/hotel-offers/MOCK_OFFER_961"
+              "href": "https://api.amadeus.com/v3/shopping/hotel-offers/MOCK_OFFER_57"
             },
             "rateFamilyEstimated": {
               "type": "P",
               "code": "PRO"
             },
-            "id": "MOCK_OFFER_961",
+            "id": "MOCK_OFFER_57",
             "checkInDate": "2025-10-01",
             "rateCode": "RAC",
             "room": {
@@ -1356,7 +1217,7 @@ export const mockItineraryResponse: ItineraryApiResponse = {
           "rating": "2-star",
           "hotelId": "MOCK_HOTEL_STANDARD_JFK"
         },
-        "id": "MOCK_STANDARD_JFK_8960",
+        "id": "MOCK_STANDARD_JFK_7057",
         "type": "hotel-offer"
       }
     ]
@@ -1365,12 +1226,12 @@ export const mockItineraryResponse: ItineraryApiResponse = {
     "ENTERTAINMENT": [
       {
         "images": [
-          "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzMyNTIyNGI0LTM2MWMtNDA5Mi1iMDBlLWY2MTYxMjg1OTBhMSIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0=",
-          "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzRmMGI4ZTNjLTVlYjQtNDBkZi1iMzM1LTMxMTFmNmYyNjc5YyIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0=",
+          "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzZiNGYxZDMyLTU3NTAtNDJhOC05YzNiLWZiZmFlNzFhNTc3NSIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0=",
           "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzFkMmNlOTc1LTAwYjYtNGIyZC1hMjYxLWM2NzYyMWZkZjk0YyIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0=",
-          "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzM5ZmMwNTRjLTJhYWQtNGJjNC05OGZhLTNiMjk2NGE5MzdkNSIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0=",
           "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzU4MDIyN2EwLWJkNTYtNGExMi1hNjFmLTUwOTU1NTI3OTlkNCIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0=",
-          "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzZiNGYxZDMyLTU3NTAtNDJhOC05YzNiLWZiZmFlNzFhNTc3NSIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0="
+          "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzRmMGI4ZTNjLTVlYjQtNDBkZi1iMzM1LTMxMTFmNmYyNjc5YyIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0=",
+          "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzMyNTIyNGI0LTM2MWMtNDA5Mi1iMDBlLWY2MTYxMjg1OTBhMSIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0=",
+          "https://images.holibob.tech/eyJrZXkiOiJwcm9kdWN0SW1hZ2VzLzM5ZmMwNTRjLTJhYWQtNGJjNC05OGZhLTNiMjk2NGE5MzdkNSIsImVkaXRzIjp7InJlc2l6ZSI6eyJmaXQiOiJjb3ZlciIsIndpZHRoIjoxOTIwLCJoZWlnaHQiOjEwODB9fX0="
         ],
         "price": {
           "currency": "GBP",
@@ -1388,18 +1249,18 @@ export const mockItineraryResponse: ItineraryApiResponse = {
       }
     ],
     "_metadata": {
-      "totalCategories": 0,
-      "searchTimestamp": "2025-09-08T12:31:31.632924Z",
-      "searchDurationMs": 2669,
-      "currency": "USD",
       "searchLocation": {
         "latitude": 51.5074,
         "longitude": 0.1278,
         "radius": "25km"
-      }
+      },
+      "totalCategories": 0,
+      "searchTimestamp": "2025-09-08T19:07:43.400176230Z",
+      "searchDurationMs": 6341,
+      "currency": "USD"
     }
   },
-  "trackingId": null,
+  "trackingId": "Asdasdasdasdasd",
   "bookingStatus": null,
   "bookedClassType": null,
   "selectedItineraryType": null,
@@ -1410,11 +1271,250 @@ export const mockItineraryResponse: ItineraryApiResponse = {
   "passengerEmail": null,
   "passengerPhone": null,
   "specialRequests": null,
-  "flightsBookStatus": false,
-  "flightBookingResult": null,
-  "hotelsBookStatus": false,
-  "hotelBookingResult": null,
-  "createdAt": "2025-09-08T18:02:27.311366",
-  "updatedAt": "2025-09-08T18:02:27.311382",
+  "flightsBookStatus": true,
+  "flightBookingResult": {
+    "ticketingDeadline": "2025-09-16T07:31:23.053481349",
+    "gracePeriod": "6 days",
+    "instructions": "Complete payment within 6 days to issue tickets",
+    "note": "Ready for real Amadeus API - requires Gson dependency for JsonObject",
+    "totalPrice": {
+      "total": "2400.00",
+      "currency": "USD",
+      "base": "2375.00"
+    },
+    "amadeusRequestSize": 2389,
+    "errorType": "UNEXPECTED_API_ERROR",
+    "ticketingRequired": true,
+    "requestSentToAmadeus": true,
+    "nextSteps": "Use real flight offers from search for actual bookings",
+    "bookingReference": "CT483053",
+    "createdAt": "2025-09-10T07:31:23.053600540",
+    "paymentRequired": true,
+    "bookingType": "HOLD",
+    "pdfPath": "booking-pdfs/flight_booking_CT483053_1757489483053.pdf",
+    "realApiAttempted": true,
+    "bookingStatus": "TICKETING_PENDING",
+    "instantTicketing": false,
+    "amadeusError": "[400]\nThis attribute must be a number",
+    "pdfGenerated": true,
+    "flightOrderId": "eJzTd9f3NjIwNDa%2BMjY1NgVCAAAAczEF%2FQ%3D%3D",
+    "contactEmail": "booking@cleartrip.com",
+    "message": "Flight booking successful - PNR created, ticketing pending",
+    "flightOffers": [
+      {
+        "type": "flight-offer",
+        "id": "MOCK_BUSINESS_8225",
+        "source": "GDS",
+        "instantTicketingRequired": false,
+        "disablePricing": false,
+        "nonHomogeneous": false,
+        "oneWay": false,
+        "paymentCardRequired": false,
+        "lastTicketingDate": "2025-12-31",
+        "numberOfBookableSeats": 9,
+        "itineraries": [
+          {
+            "duration": "PT8H30M",
+            "segments": [
+              {
+                "departure": {
+                  "iataCode": "BOM",
+                  "at": "2025-10-01T10:00:00"
+                },
+                "arrival": {
+                  "iataCode": "JFK",
+                  "at": "2025-10-01T18:30:00"
+                },
+                "carrierCode": "EK",
+                "number": "MOCK123",
+                "aircraft": {
+                  "code": "320"
+                },
+                "operating": {
+                  "carrierCode": "EK"
+                },
+                "duration": "PT8H30M",
+                "id": "1",
+                "numberOfStops": 0,
+                "blacklistedInEU": false
+              }
+            ]
+          }
+        ],
+        "price": {
+          "currency": "USD",
+          "total": "2400.00",
+          "base": "2375.00",
+          "fees": [
+            {
+              "amount": "25.00",
+              "type": "SUPPLIER"
+            }
+          ],
+          "grandTotal": "2425.00"
+        },
+        "pricingOptions": {
+          "includedCheckedBagsOnly": true,
+          "fareType": [
+            "PUBLISHED"
+          ],
+          "refundableFare": false,
+          "noRestrictionFare": false,
+          "noPenaltyFare": false
+        },
+        "validatingAirlineCodes": [
+          "EK"
+        ],
+        "travelerPricings": [
+          {
+            "travelerId": "1",
+            "fareOption": "STANDARD",
+            "travelerType": "ADULT",
+            "price": {
+              "currency": "USD",
+              "total": "2400.00",
+              "base": "2375.00"
+            },
+            "fareDetailsBySegment": [
+              {
+                "segmentId": "1",
+                "cabin": "BUSINESS",
+                "fareBasis": "MOCK123",
+                "brandedFare": "BASIC",
+                "class": "J",
+                "isAllotment": false,
+                "includedCheckedBags": {
+                  "quantity": 1,
+                  "weight": 0
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "pnr": "CT483053",
+    "contactPhone": "9876543210",
+    "holdMode": true,
+    "apiIntegrationStatus": "WORKING - SSL and Auth successful"
+  },
+  "hotelsBookStatus": true,
+  "hotelBookingResult": {
+    "pdfGenerated": true,
+    "data": {
+      "roomQuantity": 1,
+      "policies": {
+        "cancellation": {
+          "type": "FULL_STAY",
+          "deadline": "2025-09-11"
+        },
+        "guarantee": {
+          "acceptedPayments": {
+            "creditCards": [
+              "VI",
+              "MC",
+              "AX"
+            ],
+            "methods": [
+              "CREDIT_CARD",
+              "AGENCY_ACCOUNT"
+            ]
+          }
+        },
+        "paymentType": "GUARANTEE"
+      },
+      "confirmation": {
+        "timestamp": "2025-09-10T07:31:23.169180746Z",
+        "status": "CONFIRMED",
+        "source": "AMADEUS_API"
+      },
+      "type": "hotel-booking",
+      "rateCode": "RAC",
+      "room": {
+        "typeEstimated": {
+          "bedType": "KING",
+          "beds": 1,
+          "category": "SUITE"
+        },
+        "description": {
+          "text": "Luxurious suite with premium amenities and city view"
+        },
+        "type": "STANDARD"
+      },
+      "roomStatus": "RESERVED",
+      "checkIn": {
+        "date": "2025-09-11",
+        "time": "15:00"
+      },
+      "price": {
+        "total": "350.00",
+        "base": "297.50",
+        "currency": "USD",
+        "fees": [
+          {
+            "amount": "10.50",
+            "description": "Service fee",
+            "type": "SERVICE"
+          }
+        ],
+        "taxes": [
+          {
+            "code": "CITY_TAX",
+            "included": true,
+            "percentage": "12.00",
+            "amount": "42.00"
+          }
+        ]
+      },
+      "associatedRecords": [
+        {
+          "originSystemCode": "GDS",
+          "reference": "Z7NXVT"
+        }
+      ],
+      "providerConfirmationId": "PVR83168",
+      "guests": [
+        {
+          "phone": "+1-555-123-4567",
+          "title": "MR",
+          "firstName": "GUEST",
+          "lastName": "USER",
+          "email": "guest@example.com"
+        }
+      ],
+      "hotel": {
+        "contact": {
+          "phone": "+1-555-HOTEL-1",
+          "email": "reservations@luxurypalacejfk.com"
+        },
+        "hotelId": "HTL_LUXURY_JFK",
+        "address": {
+          "cityName": "Unknown City",
+          "countryCode": "XX",
+          "lines": [
+            "123 Luxury Palace JFK Street"
+          ]
+        },
+        "rating": "5-star",
+        "cityCode": "JFK",
+        "name": "Luxury Palace JFK"
+      },
+      "bookingStatus": "CONFIRMED",
+      "id": "Z7NXVT",
+      "checkOut": {
+        "date": "2025-09-13",
+        "time": "11:00"
+      }
+    },
+    "pdfPath": "booking-pdfs/hotel_booking_Z7NXVT_1757489483170.pdf",
+    "_metadata": {
+      "originalOfferId": "MOCK_LUXURY_JFK_7058",
+      "dataSource": "FALLBACK_SYSTEM",
+      "bookingMethod": "GUARANTEE_POLICY",
+      "responseGenerated": "2025-09-10T07:31:23.169228643Z"
+    }
+  },
+  "createdAt": "2025-09-08T19:08:41.923",
+  "updatedAt": "2025-09-10T07:31:23.281",
   "booked": false
 }

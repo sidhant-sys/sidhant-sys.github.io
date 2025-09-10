@@ -1,13 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ElevenLabsConvAI } from './ElevenLabsConvAI';
 import { ChatInterface } from './ChatInterface';
 import { ItineraryDisplay } from './ItineraryDisplay';
-import { EnhancedItineraryView } from './EnhancedItineraryView';
 import { TierSelector } from './TierSelector';
 import { BookingInterface } from './BookingInterface';
 // Removed TrackingEntriesDisplay import - using hook directly
 import { SimpleLoader } from './SimpleLoader';
 import { useSimpleLoader } from '../hooks/useSimpleLoader';
+import { navigateToItinerary } from '../utils/navigation';
 import { useTrackingPolling } from '../hooks/useTrackingPolling';
 import { useBooking } from '../hooks/useBooking';
 import { Button } from './ui/button';
@@ -37,9 +38,6 @@ interface StepRendererProps {
   onTierSelect: (tier: TierType) => void;
   onBookItem: (item: { id: string }) => void;
   onBackToPlanning: () => void;
-  onBackToChat: () => void;
-  onEditItem: (id: string) => void;
-  onDeleteItem: (id: string) => void;
   onActiveTabChange: (tab: string) => void;
   getCurrentBudget: () => number;
   apiResponse?: ItineraryApiResponse;
@@ -64,13 +62,11 @@ const StepRenderer: React.FC<StepRendererProps> = ({
   onTierSelect,
   onBookItem,
   onBackToPlanning,
-  onBackToChat,
-  onEditItem,
-  onDeleteItem,
   onActiveTabChange,
   getCurrentBudget,
   apiResponse
 }) => {
+  const navigate = useNavigate();
   const [generatedItineraryData, setGeneratedItineraryData] = React.useState<any>(null);
   const [showTierSelection, setShowTierSelection] = React.useState(false);
 
@@ -83,16 +79,15 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     setGeneratedItineraryData(data);
     // Hide loader when we get real data
     hideLoader();
-  }, [hideLoader]);
+    // Navigate to the itinerary view
+    navigateToItinerary(navigate, data.id || 'default');
+  }, [hideLoader, navigate]);
 
   const handleItineraryGenerationStart = React.useCallback(() => {
     // Show loader immediately
     showLoader();
   }, [showLoader]);
 
-  const handleProceedToTiers = React.useCallback(() => {
-    setShowTierSelection(true);
-  }, []);
 
   const handleTierSelect = React.useCallback((tier: TierType) => {
     onTierSelect(tier);
@@ -145,7 +140,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                       onClick={() => {
                         onActiveTabChange('voice');
                       }}
-                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                         activeTab === 'voice'
                           ? 'border-blue-500 text-blue-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -157,7 +152,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                       onClick={() => {
                         onActiveTabChange('chat');
                       }}
-                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                         activeTab === 'chat'
                           ? 'border-blue-500 text-blue-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -197,8 +192,6 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                     itinerary={itinerary}
                     destination={destination}
                     dates={dates}
-                    onEditItem={onEditItem}
-                    onDeleteItem={onDeleteItem}
                   />
                 </div>
                 
@@ -233,8 +226,8 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                     <h3 className="text-lg font-semibold mb-4">Budget Summary</h3>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span>Economy:</span>
-                        <span>${totalEstimate.economy}</span>
+                        <span>Budgeted:</span>
+                        <span>${totalEstimate.budgeted}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Premium:</span>
@@ -257,11 +250,11 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                 />
                 
                 <div className="flex justify-between mt-6">
-                  <Button variant="outline" onClick={onBackToPlanning}>
+                  <Button variant="outline" onClick={onBackToPlanning} className="cursor-pointer">
                     ← Back to Planning
                   </Button>
                   {selectedTier && (
-                    <Button onClick={() => {}}>
+                    <Button onClick={() => {}} className="cursor-pointer">
                       View Bookings <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   )}
@@ -296,7 +289,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({
                     variant="outline" 
                     size="sm" 
                     onClick={resetBookingState}
-                    className="mt-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+                    className="mt-2 text-destructive border-destructive/30 hover:bg-destructive/10 cursor-pointer"
                   >
                     Try Again
                   </Button>
@@ -320,18 +313,18 @@ const StepRenderer: React.FC<StepRendererProps> = ({
               )}
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => {}}>
+                <Button variant="outline" onClick={() => {}} className="cursor-pointer">
                   ← Back to Tiers
                 </Button>
                 <div className="space-x-2">
-                  <Button variant="outline">
+                  <Button variant="outline" className="cursor-pointer">
                     <CreditCard className="w-4 h-4 mr-1" />
                     View Cart ({bookedItems.length})
                   </Button>
                   <Button 
                     onClick={onCompleteBooking}
                     disabled={isBooking || !generatedItineraryData?.id || !selectedTier}
-                    className={lastBooking ? 'bg-success hover:bg-success/90' : ''}
+                    className={`${lastBooking ? 'bg-success hover:bg-success/90' : ''} cursor-pointer`}
                   >
                     {isBooking ? (
                       <>
@@ -363,9 +356,9 @@ const StepRenderer: React.FC<StepRendererProps> = ({
 
   // Show tier selection if requested
   if (showTierSelection && generatedItineraryData) {
-    // Get budget estimates from the generated data (map 'budgeted' to 'economy')
+    // Get budget estimates from the generated data
     const budgetEstimate = generatedItineraryData.generatedItinerary ? {
-      economy: generatedItineraryData.generatedItinerary.budgeted?.overview?.total_cost || 0,
+      budgeted: generatedItineraryData.generatedItinerary.budgeted?.overview?.total_cost || 0,
       premium: generatedItineraryData.generatedItinerary.premium?.overview?.total_cost || 0,
       luxury: generatedItineraryData.generatedItinerary.luxury?.overview?.total_cost || 0,
     } : totalEstimate;
@@ -373,7 +366,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <Button variant="outline" onClick={handleBackFromTiers}>
+          <Button variant="outline" onClick={handleBackFromTiers} className="cursor-pointer">
             ← Back to Itinerary
           </Button>
         </div>
@@ -386,41 +379,19 @@ const StepRenderer: React.FC<StepRendererProps> = ({
     );
   }
 
-  // Show expanded itinerary view if we have generated data
+  // Note: EnhancedItineraryView is now handled by routing
+  // If we have generated data, we should navigate to the itinerary route
   if (generatedItineraryData) {
-    return (
-      <EnhancedItineraryView
-        itinerary={generatedItineraryData.itinerary || itinerary}
-        destination={generatedItineraryData.destination || destination}
-        dates={generatedItineraryData.dates || dates}
-        selectedTier={selectedTier || undefined}
-        onBackToChat={() => {
-          setGeneratedItineraryData(null);
-          setShowTierSelection(false);
-          onBackToChat();
-        }}
-        onEditItem={onEditItem}
-        onDeleteItem={onDeleteItem}
-        onProceedToTiers={handleProceedToTiers}
-        apiResponse={generatedItineraryData}
-      />
-    );
+    // This should not happen as we navigate immediately after generation
+    // But if it does, navigate to the itinerary view
+    navigateToItinerary(navigate, generatedItineraryData.id || 'default');
+    return null;
   }
 
   if (layoutMode === 'full-itinerary') {
-    return (
-      <EnhancedItineraryView
-        itinerary={itinerary}
-        destination={destination}
-        dates={dates}
-        selectedTier={selectedTier || undefined}
-        onBackToChat={onBackToChat}
-        onEditItem={onEditItem}
-        onDeleteItem={onDeleteItem}
-        onProceedToTiers={() => {}}
-        apiResponse={apiResponse}
-      />
-    );
+    // Navigate to itinerary view for full itinerary mode
+    navigateToItinerary(navigate, apiResponse?.id || 'default');
+    return null;
   }
 
   return (

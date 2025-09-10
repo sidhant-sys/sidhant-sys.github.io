@@ -1,461 +1,276 @@
 import React, { useState } from 'react';
-import { Card, CardContent } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { AspectRatio } from './ui/aspect-ratio';
+import { useNavigate } from 'react-router-dom';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { ItineraryDisplay } from './ItineraryDisplay';
+import { ModernItineraryView } from './ModernItineraryView';
 import { DetailedBookingView } from './DetailedBookingView';
-import { transformItineraryResponse, getCostBreakdown } from '../utils/itineraryTransform';
-import { usePricing } from '../hooks/usePricing';
+import { MediaCarousel, MediaItem } from './MediaCarousel';
+import { BudgetOverviewTabs } from './BudgetOverviewTabs';
+import { QuickActionsGrid } from './QuickActionsGrid';
 import { CurrencyDropdown } from './CurrencyDropdown';
 import { ItineraryApiResponse } from '../types/api';
 import { TierType } from './TierSelector';
+import { useBooking } from '../hooks/useBooking';
+import { navigateToConfirmation } from '../utils/navigation';
 import tripInspiration1 from '../assets/trip-inspiration1.png';
 import tripInspiration2 from '../assets/trip-inspiration2.png';
-import experienceVideo from '../assets/experience.mp4';
-import { 
-  MapPin, 
-  Calendar, 
-  Users, 
-  Play, 
-  Heart,
-  Share,
-  Camera,
-  Video,
-  Plane,
-  Hotel,
-  Utensils,
-  Settings,
-  ArrowRight,
-  MessageSquare,
-  Grid,
-  List,
-  BarChart3
-} from 'lucide-react';
-
-interface ItineraryItem {
-  id: string;
-  day: number;
-  time: string;
-  activity: string;
-  location: string;
-  description: string;
-  type: 'activity' | 'dining' | 'transport' | 'accommodation';
-  priority: 'high' | 'medium' | 'low';
-  price?: number;
-  bookingAvailable?: boolean;
-}
-
-interface MediaItem {
-  id: string;
-  type: 'image' | 'video';
-  url: string;
-  title: string;
-  description: string;
-  location: string;
-  category: string;
-}
-
-interface BookingCategory {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  description: string;
-  itemCount: number;
-  priceRange: string;
-  image: string;
-  color: string;
-}
-
+import { ChevronRight, ShoppingCart } from 'lucide-react';
 
 interface EnhancedItineraryViewProps {
-  itinerary: ItineraryItem[];
+  itinerary: any[];
   destination: string;
   dates: string;
-  onEditItem: (id: string) => void;
-  onDeleteItem: (id: string) => void;
   onBackToChat: () => void;
-  onProceedToTiers: () => void;
-  selectedTier?: string;
-  apiResponse?: ItineraryApiResponse; // New prop for API response
+  selectedTier?: TierType;
+  apiResponse?: ItineraryApiResponse;
 }
 
 export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   itinerary,
   destination,
   dates,
-  onEditItem,
-  onDeleteItem,
   onBackToChat,
-  onProceedToTiers,
-  selectedTier,
+  selectedTier = 'budgeted', // Default to budgeted tier
   apiResponse
 }) => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'overview' | 'itinerary' | 'media'>('overview');
   const [selectedMediaCategory, setSelectedMediaCategory] = useState('all');
   const [selectedBookingCategory, setSelectedBookingCategory] = useState<string | null>(null);
+  const [currentTier, setCurrentTier] = useState<TierType>(selectedTier);
   
-  // Use pricing hook for currency conversion
-  const { formatPriceFromINR } = usePricing();
-
-  // Transform API response if available
-  const transformedData = apiResponse ? transformItineraryResponse(apiResponse) : null;
+  // Booking hook
+  const { handleBooking, isBooking } = useBooking({
+    onBookingSuccess: (booking) => {
+      console.log('Booking successful:', booking);
+      // Navigate to confirmation page instead of showing alert
+      navigateToConfirmation(navigate, apiResponse?.id || 'default');
+    },
+    onBookingError: (error) => {
+      console.error('Booking failed:', error);
+      alert(`Booking failed: ${error}`);
+    }
+  });
   
-  // Map tier names correctly (UI uses economy/premium/luxury, API uses budgeted/premium/luxury)
-  const tierMapping: Record<TierType, string> = {
-    'economy': 'budgeted',
-    'premium': 'premium', 
-    'luxury': 'luxury'
+  // Get day-wise itinerary directly from the selected tier
+  const getTierData = (tier: TierType) => {
+    if (!apiResponse?.generatedItinerary) return null;
+    
+    switch (tier) {
+      case 'budgeted':
+        return apiResponse.generatedItinerary.budgeted;
+      case 'premium':
+        return apiResponse.generatedItinerary.premium || apiResponse.generatedItinerary.budgeted;
+      case 'luxury':
+        return apiResponse.generatedItinerary.luxury || apiResponse.generatedItinerary.budgeted;
+      default:
+        return apiResponse.generatedItinerary.budgeted;
+    }
   };
   
-  const currentTier = selectedTier as TierType || 'economy';
-  const apiTierName = tierMapping[currentTier];
-  // Extract day-wise itinerary from API response
-  const rawTierData = (transformedData?.rawResponse?.generatedItinerary as any)?.[apiTierName] || 
-                      (transformedData?.rawResponse?.generatedItinerary as any)?.['budgeted'] || 
-                      Object.values(transformedData?.rawResponse?.generatedItinerary || {})[0];
+  const selectedTierData = getTierData(currentTier);
   
-  const dayWiseItinerary = rawTierData?.days || [];
-  const upsellOptions = rawTierData?.upsell || [];
+  // Extract data from the correct paths based on your specification
+  const safeDayWiseItinerary = selectedTierData?.days || [];
+  const safeUpsellOptions = (selectedTierData as any)?.upsell || [];
   
-  // Handle cost breakdown with proper fallbacks
-  let costBreakdown = null;
-  if (transformedData?.rawResponse?.generatedItinerary) {
-    const tierData = (transformedData.rawResponse.generatedItinerary as any)[apiTierName] || 
-                    (transformedData.rawResponse.generatedItinerary as any)['budgeted'] || 
-                    Object.values(transformedData.rawResponse.generatedItinerary)[0];
-    costBreakdown = getCostBreakdown(tierData);
-  } else {
-    // Fallback cost breakdown when no data is available
-    costBreakdown = getCostBreakdown(undefined);
-  }
+  // Debug: Log upsell options
+  console.log('Current tier:', currentTier);
+  console.log('Selected tier data upsell:', (selectedTierData as any)?.upsell);
+  console.log('Safe upsell options:', safeUpsellOptions);
+  
+  // Extract flights and hotels directly from tier
+  const flightsData = (selectedTierData as any)?.flights || [];
+  const hotelsData = (selectedTierData as any)?.hotels || [];
+  
+  // Extract activities, meals, and commute from days schedule
+  const extractItemsFromDays = (type: 'activity' | 'meal' | 'commute') => {
+    const items: any[] = [];
+    safeDayWiseItinerary.forEach((day: any) => {
+      if (day.schedule && Array.isArray(day.schedule)) {
+        day.schedule.forEach((item: any) => {
+          if (item.type === type) {
+            items.push({
+              ...item,
+              day: day.day,
+              id: `day-${day.day}-${type}-${items.length}`
+            });
+          }
+        });
+      }
+    });
+    return items;
+  };
+  
+  const activitiesData = extractItemsFromDays('activity');
+  const mealsData = extractItemsFromDays('meal');
+  const commuteData = extractItemsFromDays('commute');
+  
+  // Debug: Log the day-wise data to see what we're getting
+  console.log('Current tier:', currentTier);
+  console.log('Selected tier data:', selectedTierData);
+  console.log('Day-wise itinerary data:', safeDayWiseItinerary);
+  console.log('Day-wise itinerary length:', safeDayWiseItinerary.length);
+  console.log('Day numbers in itinerary:', safeDayWiseItinerary.map(d => d.day));
+  
+  // Get cost breakdown from selected tier
+  const costBreakdown = selectedTierData?.overview?.cost_breakdown ? {
+    flights: selectedTierData.overview.cost_breakdown.flights || 0,
+    hotels: selectedTierData.overview.cost_breakdown.hotels || 0,
+    activities: selectedTierData.overview.cost_breakdown.activities || 0,
+    meals: selectedTierData.overview.cost_breakdown.meals || 0,
+    commute: selectedTierData.overview.cost_breakdown.commute || 0,
+    total: selectedTierData.overview.total_cost || 0
+  } : null;
 
-  // Media data with trip inspiration images as the first two items
-  const mediaItems: MediaItem[] = [
+  // Experience video
+  const experienceVideo = '/experience.mp4';
+
+  // Mock media items for trip inspiration
+  const mediaItems = [
     {
-      id: '1',
+      id: 'inspiration-1',
       type: 'image',
       url: tripInspiration1,
-      title: 'Trip Inspiration - Scenic Journey',
-      description: 'Beautiful travel inspiration showcasing stunning destinations and experiences',
-      location: destination || 'Featured Destination',
+      title: 'Parisian Streets',
+      description: 'Charming cobblestone streets of Montmartre',
+      location: 'Montmartre, Paris',
       category: 'inspiration'
     },
     {
-      id: '2',
+      id: 'inspiration-2',
       type: 'image',
       url: tripInspiration2,
-      title: 'Trip Inspiration - Adventure Awaits',
-      description: 'Discover amazing places and create unforgettable memories on your journey',
-      location: destination || 'Featured Destination',
-      category: 'inspiration'
-    },
-    {
-      id: '3',
-      type: 'image',
-      url: 'https://images.unsplash.com/photo-1621327017866-6fb07e6c96ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGZyZW5jaCUyMGZvb2QlMjBkaW5pbmd8ZW58MXx8fHwxNzU3MTU0MDc5fDA&ixlib=rb-4.1.0&q=80&w=1080',
-      title: 'French Cuisine Experience',
-      description: 'Authentic French dining in charming bistros',
-      location: 'Latin Quarter',
-      category: 'dining'
-    },
-    {
-      id: '4',
-      type: 'video',
-      url: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlaWZmZWwlMjB0b3dlciUyMHBhcmlzfGVufDF8fHx8MTc1NzE1MzMzM3ww&ixlib=rb-4.1.0&q=80&w=1080',
-      title: 'Paris City Walk',
-      description: 'A virtual tour through the streets of Paris',
-      location: 'Various',
-      category: 'attractions'
-    },
-    {
-      id: '5',
-      type: 'image',
-      url: 'https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGJvb2tpbmclMjB0cmF2ZWx8ZW58MXx8fHwxNzU3MTUzMzMzfDA&ixlib=rb-4.1.0&q=80&w=1080',
-      title: 'Luxury Hotel Rooms',
-      description: 'Elegant accommodations in the heart of Paris',
+      title: 'Eiffel Tower View',
+      description: 'Stunning view of the Eiffel Tower',
       location: 'Central Paris',
-      category: 'accommodation'
+      category: 'inspiration'
     }
   ];
 
-  // Helper function to count items by type from day-wise schedule AND upsell options
+  // Convert mediaItems to MediaItem format for carousel
+  const carouselMediaItems: MediaItem[] = mediaItems.map(item => ({
+    id: item.id,
+    type: item.type as 'video' | 'image',
+    url: item.url,
+    title: item.title,
+    description: item.description,
+    location: item.location,
+    category: item.category
+  }));
+
+  // Helper function to count items by type using correct data sources
   const getItemCountByType = (type: string): number => {
-    // Count from day-wise schedule
-    const scheduleCount = dayWiseItinerary.reduce((count: number, day: any) => {
-      return count + day.schedule.filter((item: any) => item.type === type).length;
-    }, 0);
-    
-    // Count from upsell options
-    const upsellCount = upsellOptions.filter((option: any) => option.type === type).length;
-    
-    return scheduleCount + upsellCount;
+    switch (type) {
+      case 'flights':
+        return flightsData.length;
+      case 'hotels':
+        return hotelsData.length;
+      case 'activities':
+        return activitiesData.length;
+      case 'dining':
+        return mealsData.length;
+      case 'transport':
+        return commuteData.length;
+      default:
+        return 0;
+    }
   };
 
-  // Generate booking categories from API data
-  const bookingCategories: BookingCategory[] = [
-    {
-      id: 'flights',
-      name: 'Flights',
-      icon: <Plane className="w-5 h-5" />,
-      description: 'Direct flights and connections',
-      itemCount: getItemCountByType('flight'),
-      priceRange: costBreakdown ? `${formatPriceFromINR(costBreakdown.flights)}` : `${formatPriceFromINR(37000)} - ${formatPriceFromINR(180000)}`,
-      image: 'https://images.unsplash.com/photo-1556388158-158dc78cd3f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhaXJwbGFuZSUyMGZsaWdodHxlbnwxfHx8fDE3NTcxNTMzMzN8MA&ixlib=rb-4.1.0&q=80&w=1080',
-      color: 'bg-blue-500'
-    },
-    {
-      id: 'hotels',
-      name: 'Hotels',
-      icon: <Hotel className="w-5 h-5" />,
-      description: 'From boutique to luxury stays',
-      itemCount: getItemCountByType('hotel'),
-      priceRange: costBreakdown ? `${formatPriceFromINR(costBreakdown.hotels)}` : `${formatPriceFromINR(10000)} - ${formatPriceFromINR(65000)}`,
-      image: 'https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGJvb2tpbmclMjB0cmF2ZWx8ZW58MXx8fHwxNzU3MTUzMzMzfDA&ixlib=rb-4.1.0&q=80&w=1080',
-      color: 'bg-green-500'
-    },
-    {
-      id: 'activities',
-      name: 'Activities',
-      icon: <span className="text-lg">🎯</span>,
-      description: 'Tours, attractions & experiences',
-      itemCount: getItemCountByType('activity'),
-      priceRange: costBreakdown ? `${formatPriceFromINR(costBreakdown.activities)}` : `${formatPriceFromINR(3000)} - ${formatPriceFromINR(28000)}`,
-      image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlaWZmZWwlMjB0b3dlciUyMHBhcmlzfGVufDF8fHwxNzU3MTUzMzMzfDA&ixlib=rb-4.1.0&q=80&w=1080',
-      color: 'bg-orange-500'
-    },
-    {
-      id: 'dining',
-      name: 'Dining',
-      icon: <Utensils className="w-5 h-5" />,
-      description: 'Restaurants & culinary experiences',
-      itemCount: getItemCountByType('meal'),
-      priceRange: costBreakdown ? `${formatPriceFromINR(costBreakdown.meals)}` : `${formatPriceFromINR(3700)} - ${formatPriceFromINR(25000)}`,
-      image: 'https://images.unsplash.com/photo-1621327017866-6fb07e6c96ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXJpcyUyMGZyZW5jaCUyMGZvb2QlMjBkaW5pbmd8ZW58MXx8fHwxNzU3MTU0MDc5fDA&ixlib=rb-4.1.0&q=80&w=1080',
-      color: 'bg-purple-500'
-    }
-  ];
-
-  const mediaCategories = [
-    { id: 'all', name: 'All Media' },
-    { id: 'inspiration', name: 'Inspiration' },
-    { id: 'attractions', name: 'Attractions' },
-    { id: 'dining', name: 'Dining' },
-    { id: 'culture', name: 'Culture' },
-    { id: 'accommodation', name: 'Hotels' }
-  ];
-
-  const filteredMedia = selectedMediaCategory === 'all' 
-    ? mediaItems 
-    : mediaItems.filter(item => item.category === selectedMediaCategory);
+  // Get transport count (commute only)
+  const getTransportItemCount = (): number => {
+    return commuteData.length;
+  };
 
   const renderOverview = () => (
-    <div className="space-y-8">
-      {/* Destination Hero */}
-      <Card className="overflow-hidden">
-        <div className="relative h-64">
-          <video
-            src={experienceVideo}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover transition-opacity duration-500"
-            onError={(e) => {
-              // Fallback to image if video fails
-              const target = e.target as HTMLVideoElement;
-              target.style.display = 'none';
-              const fallbackImg = document.createElement('img');
-              fallbackImg.src = mediaItems[0]?.url || '';
-              fallbackImg.className = 'w-full h-full object-cover';
-              fallbackImg.alt = transformedData?.globalData.destination || destination || '';
-              target.parentNode?.appendChild(fallbackImg);
-            }}
-          />
-          {/* Video play indicator */}
-          <div className="absolute bottom-4 right-4">
-            <div className="bg-black/20 rounded-full p-2 backdrop-blur-sm">
-              <Play className="w-4 h-4 text-white/80" />
-            </div>
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <div className="absolute bottom-6 left-6 text-white">
-            <h1 className="text-3xl font-bold mb-2">{transformedData?.globalData.destination || destination}</h1>
-            <div className="flex items-center space-x-4 text-sm">
-              <div className="flex items-center space-x-1">
-                <Calendar className="w-4 h-4" />
-                <span>{transformedData?.globalData.duration || dates}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <MapPin className="w-4 h-4" />
-                <span>{dayWiseItinerary.length || itinerary.length} days planned</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Users className="w-4 h-4" />
-                <span>{transformedData?.globalData.numberOfTravellers || 1} traveler(s)</span>
-              </div>
-            </div>
-          </div>
-          <div className="absolute top-6 right-6 flex space-x-2">
-            <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30">
-              <Heart className="w-4 h-4 mr-1" />
-              Save
-            </Button>
-            <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30">
-              <Share className="w-4 h-4 mr-1" />
-              Share
-            </Button>
+    <div className="flex flex-col col-gap-6">
+      {/* Hero Section with Carousel + Budget Split */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+        {/* Media Carousel - Left Half */}
+        <div className="relative group">
+          {/* <div className="absolute inset-0 bg-gradient-to-br from-gray-900/5 to-gray-900/10 rounded-full -z-10" /> */}
+          <div className="rounded-\[8px\] transition-all duration-300">
+            <MediaCarousel
+              items={carouselMediaItems}
+              experienceVideo={experienceVideo}
+            destination={apiResponse ? `${apiResponse.from} to ${apiResponse.to}` : destination}
+            dates={selectedTierData?.overview?.duration || dates}
+            numberOfTravellers={apiResponse?.numberOfTravellers || 1}
+              duration={safeDayWiseItinerary.length || itinerary.length}
+              onSave={() => {/* Handle save */}}
+              onShare={() => {/* Handle share */}}
+              className="h-80 w-full"
+            />
           </div>
         </div>
-      </Card>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{dayWiseItinerary.length || itinerary.length}</div>
-            <p className="text-sm text-muted-foreground">Days</p>
-          </CardContent>
-        </Card>
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{rawTierData?.overview?.duration || '7 days'}</div>
-            <p className="text-sm text-muted-foreground">Duration</p>
-          </CardContent>
-        </Card>
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{transformedData?.globalData.numberOfTravellers || 1}</div>
-            <p className="text-sm text-muted-foreground">People</p>
-          </CardContent>
-        </Card>
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">
-              {costBreakdown ? formatPriceFromINR(costBreakdown.total) : formatPriceFromINR(250000)}
-            </div>
-            <p className="text-sm text-muted-foreground">Est. Budget</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Ultra Compact Cost Breakdown */}
-      {costBreakdown && (
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="w-4 h-4 text-gray-600" />
-                <span className="font-medium text-gray-900">Cost Breakdown</span>
-              </div>
-              <span className="text-lg font-bold text-gray-900">{formatPriceFromINR(costBreakdown.total)}</span>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {[
-                { key: 'flights', label: 'Flights', icon: '✈️', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-                { key: 'hotels', label: 'Hotels', icon: '🏨', color: 'bg-green-100 text-green-700 border-green-200' },
-                { key: 'activities', label: 'Activities', icon: '🎯', color: 'bg-orange-100 text-orange-700 border-orange-200' },
-                { key: 'meals', label: 'Meals', icon: '🍽️', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-                { key: 'commute', label: 'Transport', icon: '🚗', color: 'bg-gray-100 text-gray-700 border-gray-200' }
-              ].map((category) => {
-                const amount = costBreakdown[category.key as keyof typeof costBreakdown];
-                const percentage = costBreakdown.total > 0 ? (amount / costBreakdown.total) * 100 : 0;
-                
-                return (
-                  <div key={category.key} className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border ${category.color} text-xs font-medium`}>
-                    <span>{category.icon}</span>
-                    <span>{category.label}</span>
-                    <span className="font-semibold">{formatPriceFromINR(amount)}</span>
-                    <span className="opacity-75">({percentage.toFixed(0)}%)</span>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-
-      {/* Booking Categories Preview */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Available for Booking</h2>
-          <Button variant="outline" onClick={onProceedToTiers}>
-            View All Options <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {bookingCategories.map((category) => (
-            <Card 
-              key={category.id} 
-              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => {
-                setSelectedBookingCategory(category.id);
-              }}
-            >
-              <div className="relative h-32">
-                <ImageWithFallback
-                  src={category.image}
-                  alt={category.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 left-2">
-                  <div className={`${category.color} text-white p-1 rounded`}>
-                    {category.icon}
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <h3 className="font-medium mb-1">{category.name}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{category.description}</p>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{category.itemCount} options</span>
-                  <span className="font-medium">{category.priceRange}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Budget & Overview Tabs - Right Half */}
+        <div className="relative group">
+          <div className="rounded-\[8px\]  transition-all duration-300">
+            <BudgetOverviewTabs
+              costBreakdown={costBreakdown ? {
+                flights: costBreakdown.flights,
+                accommodation: costBreakdown.hotels,
+                activities: costBreakdown.activities,
+                dining: costBreakdown.meals,
+                transport: costBreakdown.commute,
+                total: costBreakdown.total
+              } : undefined}
+              duration={safeDayWiseItinerary.length || itinerary.length}
+              numberOfTravellers={apiResponse?.numberOfTravellers || 1}
+              rating={4.5}
+              className="h-80 w-full"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Media Preview */}
-      <div>
+      {/* Quick Actions Grid */}
+      <div className="mb-12 mt-12">
+        <QuickActionsGrid
+          itemCounts={{
+            flights: getItemCountByType('flights'),
+            hotels: getItemCountByType('hotels'),
+            activities: getItemCountByType('activities'),
+            dining: getItemCountByType('dining'),
+            transport: getTransportItemCount()
+          }}
+          onCategoryClick={setSelectedBookingCategory}
+        />
+      </div>
+
+
+      {/* Media Gallery Preview */}
+      <div className="mt-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Trip Inspiration</h2>
-          <Button variant="outline" onClick={() => setViewMode('media')}>
-            <Camera className="w-4 h-4 mr-1" />
-            View All Media
-          </Button>
+          <div>
+            <h3 className="text-xl font-semibold text-foreground mb-1">Trip Inspiration</h3>
+            <p className="text-muted-foreground">Discover stunning visuals from your destination</p>
+          </div>
+          <button 
+            onClick={() => setViewMode('media')}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer"
+          >
+            View All
+            <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+          </button>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="flex flex-row md:flex-row gap-4">
           {mediaItems.slice(0, 3).map((media) => (
-            <Card key={media.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-              <AspectRatio ratio={16/10}>
-                <div className="relative">
-                  <ImageWithFallback
-                    src={media.url}
-                    alt={media.title}
-                    className="w-full h-full object-cover"
-                  />
-                  {media.type === 'video' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-black/50 rounded-full p-3">
-                        <Play className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                  )}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                    <h4 className="text-white font-medium text-sm">{media.title}</h4>
-                    <p className="text-white/80 text-xs">{media.location}</p>
-                  </div>
-                </div>
-              </AspectRatio>
-            </Card>
+            <div key={media.id} className="relative group cursor-pointer flex-1">
+              <div className="aspect-video rounded-xl overflow-hidden bg-muted/30">
+                <ImageWithFallback
+                  src={media.url}
+                  alt={media.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-xl" />
+              <div className="absolute bottom-3 left-3 text-white">
+                <h5 className="font-medium text-sm mb-1">{media.title}</h5>
+                <p className="text-xs text-white/80">{media.location}</p>
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -463,168 +278,199 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   );
 
   const renderMediaGallery = () => (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold flex items-center space-x-2">
-          <Camera className="w-5 h-5" />
-          <span>Trip Media & Inspiration</span>
-        </h2>
-        <Button variant="outline" onClick={() => setViewMode('overview')}>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Trip Inspiration</h2>
+          <p className="text-muted-foreground">Discover stunning visuals from your destination</p>
+        </div>
+        <button 
+          onClick={() => setViewMode('overview')}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer"
+        >
           Back to Overview
-        </Button>
+          <ChevronRight className="w-4 h-4 rotate-180" strokeWidth={1.5} />
+        </button>
       </div>
 
-      {/* Media Category Filter */}
+      {/* Category Filter */}
       <div className="flex flex-wrap gap-2">
-        {mediaCategories.map((category) => (
-          <Button
-            key={category.id}
-            variant={selectedMediaCategory === category.id ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedMediaCategory(category.id)}
+        {['all', 'inspiration', 'accommodation', 'activities'].map((category) => (
+          <button
+            key={category}
+            onClick={() => setSelectedMediaCategory(category)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+              selectedMediaCategory === category
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
           >
-            {category.name}
-          </Button>
+            {category.charAt(0).toUpperCase() + category.slice(1)}
+          </button>
         ))}
       </div>
 
       {/* Media Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredMedia.map((media) => (
-          <Card key={media.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-            <AspectRatio ratio={16/10}>
-              <div className="relative">
+      <div className="flex flex-col md:flex-row lg:flex-row flex-wrap gap-6">
+        {mediaItems
+          .filter(item => selectedMediaCategory === 'all' || item.category === selectedMediaCategory)
+          .map((media) => (
+            <div key={media.id} className="relative group cursor-pointer flex-1 min-w-0 md:flex-1 lg:flex-1">
+              <div className="aspect-video rounded-xl overflow-hidden bg-muted/30">
                 <ImageWithFallback
                   src={media.url}
                   alt={media.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                {media.type === 'video' && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-black/50 rounded-full p-4">
-                      <Play className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                )}
-                <div className="absolute top-2 right-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {media.type === 'video' ? (
-                      <><Video className="w-3 h-3 mr-1" />Video</>
-                    ) : (
-                      <><Camera className="w-3 h-3 mr-1" />Photo</>
-                    )}
-                  </Badge>
-                </div>
               </div>
-            </AspectRatio>
-            <CardContent className="p-4">
-              <h4 className="font-medium mb-2">{media.title}</h4>
-              <p className="text-sm text-muted-foreground mb-2">{media.description}</p>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <MapPin className="w-3 h-3 mr-1" />
-                <span>{media.location}</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-xl" />
+              <div className="absolute bottom-3 left-3 text-white">
+                <h5 className="font-medium text-sm mb-1">{media.title}</h5>
+                <p className="text-xs text-white/80">{media.location}</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          ))}
       </div>
+
+      {/* Empty State */}
+      {mediaItems.filter(item => selectedMediaCategory === 'all' || item.category === selectedMediaCategory).length === 0 && (
+        <div className="text-center py-12">
+          <div className="text-muted-foreground">
+            <h3 className="text-lg font-medium text-foreground mb-2">No media found</h3>
+            <p className="text-muted-foreground">Try selecting a different category</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 
   // Show detailed booking view if a category is selected
   if (selectedBookingCategory) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <DetailedBookingView
-          category={selectedBookingCategory as 'flights' | 'hotels' | 'activities' | 'dining'}
-          selectedTier={(selectedTier || 'economy') as TierType}
-          destination={destination}
-          onBack={() => setSelectedBookingCategory(null)}
-          dayWiseData={dayWiseItinerary}
-          upsellOptions={upsellOptions}
-        />
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <DetailedBookingView
+            category={selectedBookingCategory === 'transport' ? 'commute' : selectedBookingCategory as any}
+            selectedTier={currentTier}
+            destination={apiResponse?.to || destination}
+            onBack={() => setSelectedBookingCategory(null)}
+            dayWiseData={safeDayWiseItinerary}
+            upsellOptions={safeUpsellOptions}
+            tierData={selectedTierData}
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-      {/* Debug info */}
-      {selectedBookingCategory && (
-        <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg">
-          <p>Debug: Selected category: {selectedBookingCategory}</p>
-          <Button onClick={() => setSelectedBookingCategory(null)}>Clear Selection</Button>
-        </div>
-      )}
-      
-      {/* Header with Chat Toggle */}
-      <Card>
-        <CardContent className="p-4">
+    <div className="min-h-screen bg-background">
+      {/* Modern Header */}
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" onClick={onBackToChat}>
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Back to Chat
-              </Button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onBackToChat}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                ← Back to Chat
+              </button>
+              <div className="h-6 w-px bg-border" />
+              <h1 className="text-xl font-semibold text-foreground">
+                {apiResponse?.to || destination}
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <CurrencyDropdown />
               
-              {/* View Mode Tabs */}
-              <div className="flex space-x-1 bg-muted p-1 rounded-lg">
-                <Button
-                  variant={viewMode === 'overview' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('overview')}
+              {/* Tier Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">Tier:</span>
+                <select
+                  value={currentTier}
+                  onChange={(e) => setCurrentTier(e.target.value as TierType)}
+                  className="px-3 py-1.5 text-sm border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors"
                 >
-                  <Grid className="w-4 h-4 mr-1" />
-                  Overview
-                </Button>
-                <Button
-                  variant={viewMode === 'itinerary' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('itinerary')}
-                >
-                  <List className="w-4 h-4 mr-1" />
-                  Itinerary
-                </Button>
-                <Button
-                  variant={viewMode === 'media' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('media')}
-                >
-                  <Camera className="w-4 h-4 mr-1" />
-                  Media
-                </Button>
+                  <option value="budgeted">Budgeted</option>
+                  <option value="premium">Premium</option>
+                  <option value="luxury">Luxury</option>
+                </select>
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
-              {/* Currency Dropdown */}
-              <CurrencyDropdown size="sm" />
+            {/* Right side: Tabs and Book Now Button */}
+            <div className="flex items-center gap-4">
+              {/* Navigation Tabs */}
+              <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg">
+                <button
+                  onClick={() => setViewMode('overview')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                    viewMode === 'overview'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setViewMode('itinerary')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                    viewMode === 'itinerary'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Itinerary
+                </button>
+                <button
+                  onClick={() => setViewMode('media')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                    viewMode === 'media'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Media
+                </button>
+              </div>
               
-              <Button onClick={onProceedToTiers}>
-                <Settings className="w-4 h-4 mr-1" />
-                Choose a Plan
-              </Button>
+              {/* Global Book Now Button - Prominent Position */}
+              <button
+                onClick={async () => {
+                  if (!apiResponse?.id) {
+                    alert('No itinerary ID available for booking');
+                    return;
+                  }
+                  
+                  console.log('Global Book Now clicked for tier:', currentTier);
+                  await handleBooking(apiResponse.id, currentTier);
+                }}
+                disabled={isBooking || !apiResponse?.id}
+                className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md cursor-pointer"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                {isBooking ? 'Booking...' : 'Book Now'}
+              </button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Content based on view mode */}
-      {viewMode === 'overview' && renderOverview()}
-      {viewMode === 'media' && renderMediaGallery()}
-      {viewMode === 'itinerary' && (
-        <ItineraryDisplay
-          itinerary={itinerary}
-          destination={destination}
-          dates={dates}
-          onEditItem={onEditItem}
-          onDeleteItem={onDeleteItem}
-          dayWiseData={dayWiseItinerary}
-          upsellOptions={upsellOptions}
-          apiResponse={apiResponse}
-          selectedTier={selectedTier as TierType}
-        />
-      )}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {viewMode === 'overview' && renderOverview()}
+        {viewMode === 'itinerary' && (
+          <ModernItineraryView
+            dayWiseData={safeDayWiseItinerary}
+            onBack={() => setViewMode('overview')}
+            dates={selectedTierData?.overview?.duration || dates}
+          />
+        )}
+        {viewMode === 'media' && renderMediaGallery()}
+      </div>
     </div>
   );
 };
