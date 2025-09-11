@@ -10,5 +10,8 @@ export default defineConfig({
     rollupOptions: {
       external: ['@elevenlabs/convai-sdk']
     }
+  },
+  server: {
+    historyApiFallback: true
   }
 })
