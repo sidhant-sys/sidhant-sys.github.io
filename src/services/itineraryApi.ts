@@ -36,7 +36,7 @@ class ItineraryApiClient {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
       
-      const response = await fetch(`${this.baseUrl}/v1/itineraries/?trackingId=${encodeURIComponent('Asdasdasdasdasd')}`, {
+      const response = await fetch(`${this.baseUrl}/v1/itineraries/?trackingId=${encodeURIComponent(trackingId)}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',

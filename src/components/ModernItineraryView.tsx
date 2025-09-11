@@ -2,21 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   MapPin, 
-  Clock, 
   Plane, 
-  ShoppingCart, 
-  Star, 
-  ChevronDown, 
-  CheckCircle2,
   ArrowRight,
   Building,
   Utensils,
   Car,
-  Activity
+  Activity,
+  ChevronUp
 } from 'lucide-react';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { DailyIntelligence } from './DailyIntelligence';
 
 interface DayScheduleItem {
   type: 'flight' | 'hotel' | 'activity' | 'meal' | 'commute';
@@ -51,6 +46,11 @@ interface DayScheduleItem {
 interface DayData {
   day: number;
   schedule: DayScheduleItem[];
+  daily_intelligence?: {
+    weather?: { conditions?: string; recommendations?: string[]; };
+    daily_tips?: { best_times?: string[]; local_insights?: string[]; cultural_notes?: string[]; };
+    highlights?: { must_see?: string[]; food_recommendations?: string[]; hidden_gems?: string[]; };
+  };
 }
 
 interface ModernItineraryViewProps {
@@ -60,20 +60,19 @@ interface ModernItineraryViewProps {
 }
 
 const getTypeIcon = (type: string) => {
-  const iconClass = "w-4 h-4";
   switch (type) {
     case 'flight':
-      return <Plane className={iconClass} />;
+      return <Plane className="w-5 h-5" />;
     case 'hotel':
-      return <Building className={iconClass} />;
+      return <Building className="w-5 h-5" />;
     case 'activity':
-      return <Activity className={iconClass} />;
+      return <Activity className="w-5 h-5" />;
     case 'meal':
-      return <Utensils className={iconClass} />;
+      return <Utensils className="w-5 h-5" />;
     case 'commute':
-      return <Car className={iconClass} />;
+      return <Car className="w-5 h-5" />;
     default:
-      return <Clock className={iconClass} />;
+      return <Activity className="w-5 h-5" />;
   }
 };
 
@@ -125,9 +124,20 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
     }
   }, [dayWiseData, expandedDay]);
 
+  // Auto-scroll to top when day changes
+  useEffect(() => {
+    if (expandedDay) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [expandedDay]);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   const formatTime = (time: string) => {
     if (!time) return '';
-    // Simple time formatting - you can enhance this
     return time;
   };
 
@@ -158,204 +168,170 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Your Itinerary</h1>
-          {dates && (
-            <p className="text-gray-600 mt-1">{dates}</p>
-          )}
+    <div className="max-w-6xl mx-auto space-y-4">
+      {/* Compact Trip Header */}
+      {/* <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 px-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <div className="text-md font-bold text-gray-900">Your Trip</div>
+            <div className="text-sm text-gray-500 bg-gray-50 rounded-full">
+              {dayWiseData?.length || 0} days
+            </div>
+          </div>
         </div>
-        {onBack && (
-          <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
-            <ArrowRight className="w-4 h-4 rotate-180" />
-            Back
-          </Button>
-        )}
-      </div>
+        <div className="flex items-center space-x-2 mt-1">
+          <Calendar className="w-4 h-4 text-blue-600" />
+          <span className="text-sm text-gray-600">
+            {dates || 'A carefully crafted itinerary designed just for you'}
+          </span>
+        </div>
+      </div> */}
 
-      {/* Days */}
-      <div className="space-y-4">
-        {(dayWiseData || []).map((dayData, index) => {
-          const isExpanded = expandedDay === dayData.day;
-          const safeSchedule = dayData.schedule || [];
-          const dayTotal = safeSchedule.reduce((sum, item) => {
-            const price = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price || 0;
-            return sum + price;
-          }, 0);
-
-          return (
-            <Card key={`day-${dayData.day}-${index}`} className={`overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 ${
-              isExpanded ? 'shadow-lg' : ''
-            }`}>
-              {/* Day Header */}
-              <div 
-                className="p-6 cursor-pointer hover:bg-gray-50/50 transition-colors"
-                onClick={() => {
-                  // Toggle expansion: if this day is expanded, collapse it; otherwise expand it
-                  console.log('Clicking day', dayData.day, 'isExpanded:', isExpanded, 'current expandedDay:', expandedDay);
-                  if (isExpanded) {
-                    setExpandedDay(null);
-                  } else {
-                    setExpandedDay(dayData.day);
-                  }
-                }}
+      {/* Compact Day Navigation */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 px-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Daily Itinerary</h2>
+          <div className="flex space-x-2">
+            {(dayWiseData || []).map((dayData) => (
+              <button
+                key={dayData.day}
+                onClick={() => setExpandedDay(expandedDay === dayData.day ? null : dayData.day)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-200 cursor-pointer ${
+                  expandedDay === dayData.day
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gray-900 text-white rounded-lg flex items-center justify-center font-semibold">
-                      {dayData.day}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Day {dayData.day}</h3>
-                      <p className="text-sm text-gray-500">
-                        {safeSchedule.length} {safeSchedule.length === 1 ? 'item' : 'items'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    {dayTotal > 0 && (
-                      <div className="text-right">
-                        <div className="text-lg font-semibold text-gray-900">{formatPrice(dayTotal)}</div>
-                        <div className="text-xs text-gray-500">total</div>
-                      </div>
-                    )}
-                    <div className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                      <div className={`transform transition-transform duration-300 ease-in-out ${
-                        isExpanded ? 'rotate-180' : 'rotate-0'
-                      }`}>
-                        <ChevronDown className="w-5 h-5 text-gray-600" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Day Content */}
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
-              }`}>
-                <div className="border-t border-gray-100">
-                  <div className="p-6 space-y-4">
-                    {safeSchedule.map((item, index) => (
-                      <div
-                        key={`${dayData.day}-${index}`}
-                        className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-200 group animate-in slide-in-from-top-2 fade-in-0"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        {/* Icon */}
-                        <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-600 group-hover:bg-gray-100 transition-colors">
-                          {getTypeIcon(item.type)}
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-1">
-                                <Badge 
-                                  variant="outline" 
-                                  className={`text-xs font-medium ${getTypeColor(item.type)}`}
-                                >
-                                  {getTypeLabel(item.type)}
-                                </Badge>
-                                {getItemTime(item) && (
-                                  <div className="flex items-center gap-1 text-sm text-gray-500">
-                                    <Clock className="w-3 h-3" />
-                                    {formatTime(getItemTime(item))}
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <h4 className="font-semibold text-gray-900 mb-1">
-                                {getItemTitle(item)}
-                              </h4>
-                              
-                              {getItemSubtitle(item) && (
-                                <p className="text-sm text-gray-600 mb-2">
-                                  {getItemSubtitle(item)}
-                                </p>
-                              )}
-                              
-                              {item.description && (
-                                <p className="text-sm text-gray-600 leading-relaxed">
-                                  {item.description}
-                                </p>
-                              )}
-
-                              {/* Location */}
-                              {item.location && typeof item.location === 'string' && (
-                                <div className="flex items-center gap-1 text-sm text-gray-500 mt-2">
-                                  <MapPin className="w-3 h-3" />
-                                  {item.location}
-                                </div>
-                              )}
-
-                              {/* Additional Info */}
-                              <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                                {item.duration && (
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    {item.duration}
-                                  </div>
-                                )}
-                                {item.class && (
-                                  <div className="flex items-center gap-1">
-                                    <Star className="w-3 h-3" />
-                                    {item.class}
-                                  </div>
-                                )}
-                                {item.amenities && item.amenities.length > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    {item.amenities.length} amenities
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Price */}
-                            <div className="flex items-center gap-3 ml-4">
-                              {item.price && (
-                                <div className="text-right">
-                                  <div className="font-semibold text-gray-900">
-                                    {formatPrice(item.price)}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {item.bookingUrl && (
-                                  <Button
-                                    size="sm"
-                                    className="h-8 px-3 text-xs"
-                                  >
-                                    <ShoppingCart className="w-3 h-3 mr-1" />
-                                    Book
-                                  </Button>
-                                )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+                Day {dayData.day}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Empty State */}
-      {(dayWiseData || []).length === 0 && (
-        <div className="text-center py-12">
-          <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No itinerary available</h3>
-          <p className="text-gray-600">Your travel itinerary will appear here once generated.</p>
-        </div>
-      )}
+      {/* Selected Day Content */}
+      {expandedDay && (() => {
+        const dayData = dayWiseData?.find(d => d.day === expandedDay);
+        if (!dayData) return null;
+        
+        const safeSchedule = dayData.schedule || [];
+        const dayTotal = safeSchedule.reduce((sum, item) => {
+          const price = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price || 0;
+          return sum + price;
+        }, 0);
+
+        return (
+          <div className="space-y-4">
+            {/* Day Header */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 px-4">
+              <div className="flex items-center justify-between">
+                <div className="flex">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Day {dayData.day}</h3>
+                    <p className="text-sm text-gray-600">{safeSchedule.length} activities planned</p>
+                  </div>
+                </div>
+                {dayTotal > 0 && (
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-green-600">{formatPrice(dayTotal)}</div>
+                    <div className="text-xs text-gray-500">estimated cost</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Daily Intelligence - Compact */}
+            {dayData.daily_intelligence && (
+              <div className="bg-white rounded-lg shadow-sm">
+                <DailyIntelligence 
+                  data={dayData.daily_intelligence}
+                  day={dayData.day}
+                  variant="compact"
+                />
+              </div>
+            )}
+
+            {/* Activities List - Compact */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Activities</h4>
+              <div className="space-y-3">
+                {safeSchedule.map((item, itemIndex) => (
+                  <div
+                    key={`${dayData.day}-${itemIndex}`}
+                    className="flex items-center space-x-4 p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all duration-200"
+                  >
+                    {/* Activity Icon */}
+                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center">
+                      <div className="text-blue-600">
+                        {getTypeIcon(item.type)}
+                      </div>
+                    </div>
+
+                    {/* Activity Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <Badge className={`${getTypeColor(item.type)} font-medium px-2 py-1 text-xs`}>
+                              {getTypeLabel(item.type)}
+                            </Badge>
+                            {getItemTime(item) && (
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                {formatTime(getItemTime(item))}
+                              </span>
+                            )}
+                            {item.duration && (
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                {item.duration}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <h5 className="font-semibold text-gray-900 text-sm mb-1">
+                            {getItemTitle(item)}
+                          </h5>
+                          
+                          {getItemSubtitle(item) && (
+                            <p className="text-xs text-gray-600 mb-1">
+                              {getItemSubtitle(item)}
+                            </p>
+                          )}
+
+                          {item.location && typeof item.location === 'string' && (
+                            <div className="flex items-center space-x-1 text-xs text-gray-500">
+                              <MapPin className="w-3 h-3" />
+                              <span>{item.location}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Price */}
+                        {item.price && (
+                          <div className="text-right">
+                            <div className="text-sm font-semibold text-green-600">{formatPrice(item.price)}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Scroll to Top Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+          title="Scroll to top"
+        >
+          <ChevronUp className="w-6 h-6" />
+        </button>
+      </div>
     </div>
   );
 };

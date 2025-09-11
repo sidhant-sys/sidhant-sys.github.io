@@ -13,7 +13,8 @@ import {
   Car,
   Calendar,
   Users,
-  Star
+  Star,
+  FileText
 } from 'lucide-react';
 import { TierType } from './TierSelector';
 import FallBack from './FallBack';
@@ -210,12 +211,26 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
     categoryItems.forEach((item: any, index: number) => {
       // Create proper name for different categories
       let itemName = item.name || item[`${category.slice(0, -1)}_name`];
-      if (category === 'commute' && !itemName) {
+      if (category === 'flights' && !itemName) {
+        // Use airline name for flights instead of generic "Flights 1", "Flights 2"
+        const airline = item.airline || item[`${category.slice(0, -1)}_airline`];
+        if (airline) {
+          itemName = `${airline} Flight`;
+        } else {
+          itemName = `Flight ${index + 1}`;
+        }
+      } else if (category === 'commute' && !itemName) {
         itemName = `${item.mode || 'Transport'} from ${item.from || 'Unknown'} to ${item.to || 'Unknown'}`;
       } else if (category === 'activities' && !itemName) {
         itemName = `Activity ${index + 1}`;
       } else if (category === 'dining' && !itemName) {
-        itemName = `Restaurant ${index + 1}`;
+        // Use restaurant name for dining instead of generic "Restaurant 1", "Restaurant 2"
+        const restaurantName = item.restaurant_name || item[`${category.slice(0, -1)}_name`];
+        if (restaurantName) {
+          itemName = restaurantName;
+        } else {
+          itemName = `Restaurant ${index + 1}`;
+        }
       } else if (!itemName) {
         itemName = `${category.charAt(0).toUpperCase() + category.slice(1)} ${index + 1}`;
       }
@@ -293,8 +308,8 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
         <div className="flex items-center gap-3">
             {currentCategory.icon}
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{currentCategory.title}</h1>
-            <p className="text-muted-foreground">Available options for {destination}</p>
+            <h1 className="text-sm font-bold text-foreground">{currentCategory.title}</h1>
+            <p className="text-muted-foreground text-xs">Available options for {destination}</p>
           </div>
         </div>
       </div>
@@ -304,7 +319,7 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
         <Card className="p-8 text-center">
           <CardContent>
             <div className="text-muted-foreground mb-4">
-              <div className="text-6xl mb-4">📋</div>
+              <div className="text-2xl mb-4">📋</div>
               <h3 className="text-lg font-semibold mb-2">No {category} available</h3>
               <p>There are currently no {category} options available for this tier.</p>
         </div>
@@ -319,11 +334,11 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
                     {/* Image */}
                     <div className="h-48 bg-muted relative">
                       {getFallbackContent()}
-                      {item.available && (
-                        <Badge className="absolute top-2 right-2 bg-success text-success-foreground">
+                      {/* {item.available && (
+                        <Badge className="absolute top-2 right-2 bg-success text-green-600">
                           Available
                         </Badge>
-                  )}
+                  )} */}
               </div>
               
                     {/* Content */}
@@ -335,7 +350,7 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
                         {/* Only show price if it exists and is greater than 0 */}
                         {item.price && typeof item.price === 'number' && item.price > 0 && (
                           <div className="text-right ml-2">
-                            <div className="text-lg font-bold text-primary">
+                            <div className="text-lg font-bold text-green-600">
                               {getFormattedPrice(item.price)}
                             </div>
                             {item.originalPrice && item.originalPrice > item.price && (
@@ -369,9 +384,12 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
                       )}
 
                       {item.description && (
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                          {item.description}
-                        </p>
+                        <div className="flex items-start gap-2 text-sm text-muted-foreground mb-3">
+                          <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          <p className="line-clamp-2">
+                            {item.description}
+                          </p>
+                        </div>
                       )}
 
                       {/* Category-specific details */}

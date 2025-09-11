@@ -55,6 +55,25 @@ export interface ItineraryApiResponse {
     premium: ItineraryTier;
     luxury: ItineraryTier;
   };
+  generatedImages?: string[];
+  flightBookingResult?: {
+    bookingReference: string;
+    pdfViewUrl: string;
+    pdfDownloadUrl: string;
+    bookingStatus: string;
+    totalPrice: {
+      total: string;
+      currency: string;
+      base: string;
+    };
+  };
+  hotelBookingResult?: {
+    pdfViewUrl: string;
+    pdfDownloadUrl: string;
+    data?: {
+      bookingReference?: string;
+    };
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -78,11 +97,39 @@ export interface ItineraryTier {
   };
   days: ItineraryDay[];
   upsell: UpsellOption[];
+  travel_intelligence?: {
+    weather?: {
+      temperature?: number;
+      condition?: string;
+      humidity?: number;
+      wind_speed?: number;
+      description?: string;
+    };
+    travel_tips?: string[];
+    cultural_facts?: string[];
+    current_events?: string[];
+  };
 }
 
 export interface ItineraryDay {
   day: number;
   schedule: ScheduleItem[];
+  daily_intelligence?: {
+    weather?: {
+      conditions?: string;
+      recommendations?: string[];
+    };
+    daily_tips?: {
+      best_times?: string[];
+      local_insights?: string[];
+      cultural_notes?: string[];
+    };
+    highlights?: {
+      must_see?: string[];
+      food_recommendations?: string[];
+      hidden_gems?: string[];
+    };
+  };
 }
 
 export interface ScheduleItem {

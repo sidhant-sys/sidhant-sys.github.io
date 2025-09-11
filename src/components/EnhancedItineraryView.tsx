@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ModernItineraryView } from './ModernItineraryView';
@@ -7,6 +7,7 @@ import { MediaCarousel, MediaItem } from './MediaCarousel';
 import { BudgetOverviewTabs } from './BudgetOverviewTabs';
 import { QuickActionsGrid } from './QuickActionsGrid';
 import { CurrencyDropdown } from './CurrencyDropdown';
+import { TravelIntelligenceWidget } from './TravelIntelligenceWidget';
 import { ItineraryApiResponse } from '../types/api';
 import { TierType } from './TierSelector';
 import { useBooking } from '../hooks/useBooking';
@@ -37,6 +38,13 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   const [selectedMediaCategory, setSelectedMediaCategory] = useState('all');
   const [selectedBookingCategory, setSelectedBookingCategory] = useState<string | null>(null);
   const [currentTier, setCurrentTier] = useState<TierType>(selectedTier);
+
+  // Handle category click with scroll to top
+  const handleCategoryClick = (category: string) => {
+    setSelectedBookingCategory(category);
+    // Scroll to top when category is clicked
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   
   // Booking hook
   const { handleBooking, isBooking } = useBooking({
@@ -125,10 +133,54 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   // Experience video
   const experienceVideo = '/experience.mp4';
 
-  // Mock media items for trip inspiration
-  const mediaItems = [
+  // Dynamic media items for trip inspiration from generatedImagesUrl
+  const mediaItems = useMemo(() => {
+    if (apiResponse?.generatedImages && apiResponse.generatedImages.length > 0) {
+      return apiResponse.generatedImages.map((imageUrl, index) => {
+        // Append https://amadeus.cltp.in domain to image URLs
+        const fullImageUrl = imageUrl.startsWith('/') 
+          ? `https://amadeus.cltp.in/api/files/images${imageUrl}`
+          : `https://amadeus.cltp.in/api/files/images/${imageUrl}`;
+        
+        return {
+          id: `generated-image-${index}`,
+          type: 'image',
+          url: fullImageUrl,
+          title: `Destination Image ${index + 1}`,
+          description: `Beautiful view of ${destination}`,
+          location: destination,
+          category: 'inspiration'
+        };
+      });
+    }
+    
+    // Fallback to static images if no generated images available
+    return [
+      {
+        id: 'inspiration-1',
+        type: 'image',
+        url: tripInspiration1,
+        title: 'Parisian Streets',
+        description: 'Charming cobblestone streets of Montmartre',
+        location: 'Montmartre, Paris',
+        category: 'inspiration'
+      },
+      {
+        id: 'inspiration-2',
+        type: 'image',
+        url: tripInspiration2,
+        title: 'Eiffel Tower View',
+        description: 'Stunning view of the Eiffel Tower',
+        location: 'Central Paris',
+        category: 'inspiration'
+      }
+    ];
+  }, [apiResponse?.generatedImages, destination]);
+
+  // Static carousel media items (always use assets, separate from Trip Inspiration)
+  const carouselMediaItems: MediaItem[] = [
     {
-      id: 'inspiration-1',
+      id: 'carousel-1',
       type: 'image',
       url: tripInspiration1,
       title: 'Parisian Streets',
@@ -137,7 +189,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       category: 'inspiration'
     },
     {
-      id: 'inspiration-2',
+      id: 'carousel-2',
       type: 'image',
       url: tripInspiration2,
       title: 'Eiffel Tower View',
@@ -146,17 +198,6 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       category: 'inspiration'
     }
   ];
-
-  // Convert mediaItems to MediaItem format for carousel
-  const carouselMediaItems: MediaItem[] = mediaItems.map(item => ({
-    id: item.id,
-    type: item.type as 'video' | 'image',
-    url: item.url,
-    title: item.title,
-    description: item.description,
-    location: item.location,
-    category: item.category
-  }));
 
   // Helper function to count items by type using correct data sources
   const getItemCountByType = (type: string): number => {
@@ -181,31 +222,33 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
     return commuteData.length;
   };
 
+  // Format price helper
+
   const renderOverview = () => (
-    <div className="flex flex-col col-gap-6">
+    <div className="space-y-6">
       {/* Hero Section with Carousel + Budget Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Media Carousel - Left Half */}
         <div className="relative group">
-          {/* <div className="absolute inset-0 bg-gradient-to-br from-gray-900/5 to-gray-900/10 rounded-full -z-10" /> */}
-          <div className="rounded-\[8px\] transition-all duration-300">
+          <div className="rounded-2xl transition-all duration-300 overflow-hidden shadow-lg hover:shadow-xl">
             <MediaCarousel
               items={carouselMediaItems}
               experienceVideo={experienceVideo}
-            destination={apiResponse ? `${apiResponse.from} to ${apiResponse.to}` : destination}
-            dates={selectedTierData?.overview?.duration || dates}
-            numberOfTravellers={apiResponse?.numberOfTravellers || 1}
+              destination={apiResponse ? `${apiResponse.from} to ${apiResponse.to}` : destination}
+              dates={selectedTierData?.overview?.duration || dates}
+              numberOfTravellers={apiResponse?.numberOfTravellers || 1}
               duration={safeDayWiseItinerary.length || itinerary.length}
               onSave={() => {/* Handle save */}}
               onShare={() => {/* Handle share */}}
-              className="h-80 w-full"
+              className="h-96 w-full"
+              showVideo={currentTier === 'luxury'} // Only show video for luxury tier
             />
           </div>
         </div>
 
         {/* Budget & Overview Tabs - Right Half */}
         <div className="relative group">
-          <div className="rounded-\[8px\]  transition-all duration-300">
+          <div className="rounded-2xl transition-all duration-300 overflow-hidden shadow-lg hover:shadow-xl">
             <BudgetOverviewTabs
               costBreakdown={costBreakdown ? {
                 flights: costBreakdown.flights,
@@ -218,14 +261,117 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
               duration={safeDayWiseItinerary.length || itinerary.length}
               numberOfTravellers={apiResponse?.numberOfTravellers || 1}
               rating={4.5}
-              className="h-80 w-full"
+              className="h-96 w-full"
             />
           </div>
         </div>
       </div>
 
+      {/* Trip Stats Cards */}
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Plane className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <div className="text-xl font-bold text-gray-900">{getItemCountByType('flights')}</div>
+              <div className="text-sm text-gray-600">Flights</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Building className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <div className="text-xl font-bold text-gray-900">{getItemCountByType('hotels')}</div>
+              <div className="text-sm text-gray-600">Hotels</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <Activity className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <div className="text-xl font-bold text-gray-900">{getItemCountByType('activities')}</div>
+              <div className="text-sm text-gray-600">Activities</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+              <Utensils className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <div className="text-xl font-bold text-gray-900">{getItemCountByType('dining')}</div>
+              <div className="text-sm text-gray-600">Dining</div>
+            </div>
+          </div>
+        </div>
+      </div> */}
+
+      {/* Budget Overview Card */}
+      {/* {costBreakdown && (
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Trip Budget</h3>
+              <p className="text-gray-600">Estimated costs for your journey</p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-green-600">{formatPrice(costBreakdown.total)}</div>
+              <div className="text-sm text-gray-600">Total Estimated Cost</div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
+              <div className="text-lg font-semibold text-gray-900">{formatPrice(costBreakdown.flights)}</div>
+              <div className="text-xs text-gray-600">Flights</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
+              <div className="text-lg font-semibold text-gray-900">{formatPrice(costBreakdown.hotels)}</div>
+              <div className="text-xs text-gray-600">Hotels</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
+              <div className="text-lg font-semibold text-gray-900">{formatPrice(costBreakdown.activities)}</div>
+              <div className="text-xs text-gray-600">Activities</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
+              <div className="text-lg font-semibold text-gray-900">{formatPrice(costBreakdown.meals)}</div>
+              <div className="text-xs text-gray-600">Dining</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
+              <div className="text-lg font-semibold text-gray-900">{formatPrice(costBreakdown.commute)}</div>
+              <div className="text-xs text-gray-600">Transport</div>
+            </div>
+          </div>
+        </div>
+      )} */}
+
+      {/* Travel Intelligence Widget */}
+      {selectedTierData?.travel_intelligence && (
+        <TravelIntelligenceWidget
+          data={selectedTierData.travel_intelligence}
+          destination={apiResponse?.to || destination}
+        />
+      )}
+
       {/* Quick Actions Grid */}
-      <div className="mb-12 mt-12">
+      <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+        {/* <div className="text-center mb-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Explore Your Trip</h3>
+          <p className="text-gray-600">Dive deeper into each aspect of your journey</p>
+        </div>
+         */}
         <QuickActionsGrid
           itemCounts={{
             flights: getItemCountByType('flights'),
@@ -234,41 +380,45 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
             dining: getItemCountByType('dining'),
             transport: getTransportItemCount()
           }}
-          onCategoryClick={setSelectedBookingCategory}
+          onCategoryClick={handleCategoryClick}
         />
       </div>
 
-
-      {/* Media Gallery Preview */}
-      <div className="mt-12">
+      {/* Trip Inspiration Preview */}
+      <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-semibold text-foreground mb-1">Trip Inspiration</h3>
-            <p className="text-muted-foreground">Discover stunning visuals from your destination</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Trip Inspiration</h3>
+            <p className="text-gray-600">Get excited about your destination</p>
           </div>
           <button 
             onClick={() => setViewMode('media')}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             View All
-            <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
         
-        <div className="flex flex-row md:flex-row gap-4">
-          {mediaItems.slice(0, 3).map((media) => (
-            <div key={media.id} className="relative group cursor-pointer flex-1">
-              <div className="aspect-video rounded-xl overflow-hidden bg-muted/30">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {mediaItems.slice(0, 3).map((media, index) => (
+            <div key={media.id} className="group relative overflow-hidden rounded-xl bg-gray-100">
+              <div className="aspect-video">
                 <ImageWithFallback
                   src={media.url}
                   alt={media.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-xl" />
-              <div className="absolute bottom-3 left-3 text-white">
-                <h5 className="font-medium text-sm mb-1">{media.title}</h5>
-                <p className="text-xs text-white/80">{media.location}</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <h5 className="font-semibold text-lg mb-1 group-hover:text-blue-300 transition-colors">{media.title}</h5>
+                <p className="text-sm text-white/90">{media.location}</p>
+              </div>
+              <div className="absolute top-4 right-4">
+                <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">{index + 1}</span>
+                </div>
               </div>
             </div>
           ))}
@@ -278,41 +428,45 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   );
 
   const renderMediaGallery = () => (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Trip Inspiration</h2>
-          <p className="text-muted-foreground">Discover stunning visuals from your destination</p>
+      <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-2">Trip Inspiration</h2>
+            <p className="text-muted-foreground">Discover stunning visuals from your destination</p>
+          </div>
+          <button 
+            onClick={() => setViewMode('overview')}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer bg-gray-50 rounded-lg hover:bg-gray-100"
+          >
+            Back to Overview
+            <ChevronRight className="w-4 h-4 rotate-180" strokeWidth={1.5} />
+          </button>
         </div>
-        <button 
-          onClick={() => setViewMode('overview')}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer"
-        >
-          Back to Overview
-          <ChevronRight className="w-4 h-4 rotate-180" strokeWidth={1.5} />
-        </button>
       </div>
 
       {/* Category Filter */}
-      <div className="flex flex-wrap gap-2">
-        {['all', 'inspiration', 'accommodation', 'activities'].map((category) => (
-          <button
-            key={category}
-            onClick={() => setSelectedMediaCategory(category)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-              selectedMediaCategory === category
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            {category.charAt(0).toUpperCase() + category.slice(1)}
-          </button>
-        ))}
+      <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-100">
+        <div className="flex flex-wrap gap-2">
+          {['all', 'inspiration', 'accommodation', 'activities'].map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedMediaCategory(category)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                selectedMediaCategory === category
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Media Grid */}
-      <div className="flex flex-col md:flex-row lg:flex-row flex-wrap gap-6">
+      <div className="flex flex-col md:flex-row lg:flex-row flex-wrap gap-4">
         {mediaItems
           .filter(item => selectedMediaCategory === 'all' || item.category === selectedMediaCategory)
           .map((media) => (
@@ -330,12 +484,12 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
                 <p className="text-xs text-white/80">{media.location}</p>
               </div>
             </div>
-          ))}
+        ))}
       </div>
 
       {/* Empty State */}
       {mediaItems.filter(item => selectedMediaCategory === 'all' || item.category === selectedMediaCategory).length === 0 && (
-        <div className="text-center py-12">
+        <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 text-center">
           <div className="text-muted-foreground">
             <h3 className="text-lg font-medium text-foreground mb-2">No media found</h3>
             <p className="text-muted-foreground">Try selecting a different category</p>
@@ -349,16 +503,16 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   if (selectedBookingCategory) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <DetailedBookingView
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <DetailedBookingView
             category={selectedBookingCategory === 'transport' ? 'commute' : selectedBookingCategory as any}
             selectedTier={currentTier}
             destination={apiResponse?.to || destination}
-            onBack={() => setSelectedBookingCategory(null)}
+          onBack={() => setSelectedBookingCategory(null)}
             dayWiseData={safeDayWiseItinerary}
             upsellOptions={safeUpsellOptions}
             tierData={selectedTierData}
-          />
+        />
         </div>
       </div>
     );
@@ -449,7 +603,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
                   await handleBooking(apiResponse.id, currentTier);
                 }}
                 disabled={isBooking || !apiResponse?.id}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md cursor-pointer"
+                className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md cursor-pointer text-md"
               >
                 <ShoppingCart className="w-4 h-4" />
                 {isBooking ? 'Booking...' : 'Book Now'}
@@ -461,15 +615,36 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {viewMode === 'overview' && renderOverview()}
-        {viewMode === 'itinerary' && (
-          <ModernItineraryView
-            dayWiseData={safeDayWiseItinerary}
-            onBack={() => setViewMode('overview')}
-            dates={selectedTierData?.overview?.duration || dates}
-          />
+        {/* Category Detail View */}
+        {selectedBookingCategory && (
+          <div className="mb-8">
+            <DetailedBookingView
+              category={selectedBookingCategory === 'transport' ? 'commute' : selectedBookingCategory as 'flights' | 'hotels' | 'activities' | 'dining' | 'commute'}
+              selectedTier={currentTier}
+              destination={destination}
+              onBack={() => setSelectedBookingCategory(null)}
+              dayWiseData={safeDayWiseItinerary}
+              tierData={selectedTierData}
+            />
+          </div>
         )}
-        {viewMode === 'media' && renderMediaGallery()}
+
+        {/* Main Views */}
+        {!selectedBookingCategory && (
+          <>
+            {viewMode === 'overview' && renderOverview()}
+            {viewMode === 'itinerary' && (
+              <div>
+                <ModernItineraryView
+                  dayWiseData={safeDayWiseItinerary}
+                  onBack={() => setViewMode('overview')}
+                  dates={selectedTierData?.overview?.duration || dates}
+                />
+              </div>
+            )}
+            {viewMode === 'media' && renderMediaGallery()}
+          </>
+        )}
       </div>
     </div>
   );

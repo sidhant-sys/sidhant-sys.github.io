@@ -103,7 +103,7 @@ export const TierSelector: React.FC<TierSelectorProps> = ({
           <div className="p-2 bg-primary/10 rounded-full">
             <Zap className="w-6 h-6 text-primary" />
           </div>
-          <h2 className="text-3xl font-semibold text-foreground">
+          <h2 className="text-2xl font-semibold text-foreground">
             Choose Your Travel Style
           </h2>
         </div>

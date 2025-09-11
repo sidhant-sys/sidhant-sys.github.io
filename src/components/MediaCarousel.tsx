@@ -22,6 +22,7 @@ interface MediaCarouselProps {
   onSave?: () => void;
   onShare?: () => void;
   className?: string;
+  showVideo?: boolean; // New prop to control video display
 }
 
 export const MediaCarousel: React.FC<MediaCarouselProps> = ({
@@ -33,21 +34,23 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
   duration,
   onSave,
   onShare,
-  className = ''
+  className = '',
+  showVideo = true // Default to true for backward compatibility
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Create carousel items array - start with video, then add images
+  // Create carousel items array - conditionally include video, then add images
   const carouselItems: MediaItem[] = [
-    {
+    // Only include video if showVideo is true
+    ...(showVideo ? [{
       id: 'video-experience',
-      type: 'video',
+      type: 'video' as const,
       url: experienceVideo,
       title: 'Experience Preview',
       description: 'Immersive travel experience video',
       location: destination || 'Featured Destination',
       category: 'inspiration'
-    },
+    }] : []),
     ...items
   ];
 

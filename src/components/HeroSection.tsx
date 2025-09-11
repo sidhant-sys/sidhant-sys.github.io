@@ -90,7 +90,7 @@ export const HeroSection: React.FC = () => {
         {/* Main Content - Centered */}
         <div className="text-center mt-8">
           <div className="space-y-4 max-w-2xl mx-auto">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
               Hermes
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground font-medium max-w-md mx-auto text-balance">

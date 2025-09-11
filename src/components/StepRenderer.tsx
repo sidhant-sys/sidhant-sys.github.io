@@ -188,10 +188,29 @@ const StepRenderer: React.FC<StepRendererProps> = ({
               {/* Right side - Itinerary Display and Tracking */}
               <div>
                 <div className=" bg-white">
+                  {/* Debug: Log API Response */}
+                  {(() => {
+                    console.log('StepRenderer Debug - API Response:', {
+                      hasApiResponse: !!apiResponse,
+                      hasGeneratedItinerary: !!apiResponse?.generatedItinerary,
+                      hasBudgetedDays: !!apiResponse?.generatedItinerary?.budgeted?.days,
+                      daysLength: apiResponse?.generatedItinerary?.budgeted?.days?.length,
+                      apiResponse: apiResponse
+                    });
+                    return null;
+                  })()}
+                  
                   <ItineraryDisplay
                     itinerary={itinerary}
                     destination={destination}
                     dates={dates}
+                    dayWiseData={apiResponse?.generatedItinerary?.budgeted?.days || []}
+                    upsellOptions={[]}
+                    budgetedOverview={apiResponse?.generatedItinerary?.budgeted?.overview}
+                    premiumOverview={apiResponse?.generatedItinerary?.premium?.overview}
+                    luxuryOverview={apiResponse?.generatedItinerary?.luxury?.overview}
+                    apiResponse={apiResponse}
+                    selectedTier={selectedTier || undefined}
                   />
                 </div>
                 

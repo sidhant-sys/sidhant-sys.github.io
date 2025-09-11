@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Clock, Plane, CreditCard, ShoppingCart, TrendingUp, Users, DollarSign, Star, Sparkles, ArrowRight, ChevronDown, ChevronUp, Zap, Target, Globe, Loader2, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Clock, Plane, CreditCard, ShoppingCart, TrendingUp, Users, DollarSign, Star, Sparkles, ArrowRight, Zap, Target, Globe, Loader2, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -136,9 +136,11 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
   apiResponse,
   selectedTier: propSelectedTier
 }) => {
-  const [expandedDay, setExpandedDay] = useState<number | null>(null);
+  // Removed expandedDay state as we're using a different design approach
   const [selectedTier, setSelectedTier] = useState<'budgeted' | 'premium' | 'luxury'>('budgeted');
   const [animatedValues, setAnimatedValues] = useState<{ [key: string]: number }>({});
+
+  // Removed debug logging as we're using a different design approach
 
   // Booking functionality
   const { isBooking, lastBooking, handleBooking, resetBookingState } = useBooking({
@@ -227,6 +229,15 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
 
   // Prioritize day-wise data from API if available
   const hasApiData = dayWiseData && dayWiseData.length > 0;
+  
+  // Debug logging
+  console.log('ItineraryDisplay Debug:', {
+    hasApiData,
+    dayWiseDataLength: dayWiseData?.length,
+    itineraryLength: itinerary.length,
+    dayWiseData: dayWiseData,
+    itinerary: itinerary
+  });
 
   if (!hasApiData && itinerary.length === 0) {
     return (
@@ -250,7 +261,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                   <div className="p-2 bg-primary/10 rounded-full">
                     <Sparkles className="w-6 h-6 text-primary" />
                   </div>
-                  <h2 className="text-3xl font-bold text-foreground">
+                  <h2 className="text-2xl font-bold text-foreground">
                     Hermes
                   </h2>
                 </div> */}
@@ -333,7 +344,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
               </div>
 
               {/* Professional Call to Action */}
-              <div className="pt-4">
+              {/* <div className="pt-4">
                 <div className="group">
                   <button className="inline-flex items-center bg-primary hover:bg-primary-hover text-primary-foreground px-8 py-4 rounded-lg shadow-professional hover:shadow-professional-lg transform hover:scale-105 transition-all duration-300 font-medium">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-3"></div>
@@ -345,7 +356,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                 <p className="text-sm text-muted-foreground mt-3">
                   Click the microphone icon to begin voice planning
                 </p>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -563,320 +574,290 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
         </Card>
       )}
 
-      {/* Enhanced Daily Itinerary */}
+      {/* Modern Itinerary Timeline */}
       {hasApiData ? (
-        // Render day-wise data from API with enhanced styling
-        dayWiseData.map((dayData) => {
-          const isExpanded = expandedDay === dayData.day;
-          const dayTotal = dayData.schedule.reduce((sum, item) => {
-            const price = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price || 0;
-            return sum + price;
-          }, 0);
+        <div className="space-y-8">
+          {/* Debug Banner */}
+          <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span className="text-green-800 font-medium">NEW TIMELINE VIEW - API Data Detected</span>
+            </div>
+          </div>
           
-          return (
-            <Card key={dayData.day} className="overflow-hidden hover:shadow-lg transition-all duration-300">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-1">
-                <CardHeader 
-                  className="bg-white rounded-lg cursor-pointer"
-                  onClick={() => setExpandedDay(isExpanded ? null : dayData.day)}
-                >
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center space-x-3">
-                      {/* <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {dayData.day}
-                      </div> */}
-                      <div>
-                        <span className="text-lg">Day {dayData.day}</span>
-                        <div className="text-sm text-gray-500 font-normal">
-                          {dayData.schedule.length} activities
-                        </div>
-                      </div>
-                    </CardTitle>
-                    
-                    <div className="flex items-center space-x-3">
-                      {dayTotal > 0 && (
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-green-600">${dayTotal.toLocaleString()}</div>
-                          <div className="text-xs text-gray-500">day total</div>
-                        </div>
-                      )}
-                      <div className="transition-transform duration-200">
-                        {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-              </div>
-              
-              {isExpanded && (
-                <CardContent className="pt-0">
-                  <div className="space-y-4">
-                    {/* Timeline visualization */}
-                    <div className="relative">
-                      <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 via-indigo-200 to-purple-200"></div>
-                      
-                      {dayData.schedule.map((scheduleItem, index) => (
-                        <div
-                          key={`${dayData.day}-${index}`}
-                          className="relative flex items-start space-x-4 p-4 rounded-xl hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-300 group"
-                        >
-                          {/* Timeline dot */}
-                          <div className="relative z-10 w-12 h-12 bg-white border-4 border-blue-200 rounded-full flex items-center justify-center group-hover:border-blue-300 transition-colors">
-                      {getTypeIcon(scheduleItem.type)}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                                <div className="flex items-center space-x-3 mb-2">
-                                  <Badge className={`${getTypeColor(scheduleItem.type)} font-medium`}>
-                              {scheduleItem.type}
-                            </Badge>
-                            {(scheduleItem.departure_time || scheduleItem.start_time || scheduleItem.check_in || scheduleItem.time) && (
-                                    <span className="text-sm text-gray-600 flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                                <Clock className="w-3 h-3 mr-2" />
-                                {scheduleItem.departure_time || scheduleItem.start_time || scheduleItem.check_in || scheduleItem.time}
-                              </span>
-                            )}
-                          </div>
-                          
-                                <h4 className="font-semibold text-gray-900 text-lg mb-1">
-                            {scheduleItem.name || 
-                             scheduleItem.flight_name ||
-                             (scheduleItem.airline && `${scheduleItem.airline} Flight`) ||
-                             (scheduleItem.from && scheduleItem.to && `${scheduleItem.from} to ${scheduleItem.to}`) ||
-                             `${scheduleItem.type.charAt(0).toUpperCase() + scheduleItem.type.slice(1)}`}
-                          </h4>
-                          
-                          {scheduleItem.description && (
-                                  <p className="text-sm text-gray-600 mb-2 leading-relaxed">
-                              {scheduleItem.description}
-                            </p>
-                          )}
-                          
-                          {scheduleItem.location && (
-                            <div className="text-sm text-gray-600 mb-2">
-                              {typeof scheduleItem.location === 'string' ? (
-                                <p className="flex items-center">
-                                  <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                                  <span>{scheduleItem.location}</span>
-                                </p>
-                              ) : (
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                  <div className="flex items-center space-x-2 mb-2">
-                                    <MapPin className="w-4 h-4 text-gray-400" />
-                                    <span className="font-medium">Location Coordinates</span>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-4 text-xs">
-                                    <div>
-                                      <span className="text-gray-500">Latitude:</span>
-                                      <span className="ml-1 font-mono">
-                                        {typeof scheduleItem.location === 'object' ? scheduleItem.location.latitude : ''}
-                                      </span>
-                                    </div>
-                                    <div>
-                                      <span className="text-gray-500">Longitude:</span>
-                                      <span className="ml-1 font-mono">
-                                        {typeof scheduleItem.location === 'object' ? scheduleItem.location.longitude : ''}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <button 
-                                    className="mt-2 text-xs text-blue-600 hover:text-blue-800 flex items-center space-x-1 cursor-pointer"
-                                    onClick={() => {
-                                      if (scheduleItem.location && typeof scheduleItem.location === 'object') {
-                                        window.open(`https://maps.google.com/?q=${scheduleItem.location.latitude},${scheduleItem.location.longitude}`, '_blank');
-                                      }
-                                    }}
-                                  >
-                                    <Globe className="w-3 h-3" />
-                                    <span>View on Map</span>
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )}
+          {/* Trip Overview Header */}
+          <div className="text-center space-y-4 py-8">
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 rounded-full">
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">Your Journey</span>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900">
+              {destination || 'Your Amazing Trip'}
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              {dates || 'A carefully crafted itinerary designed just for you'}
+            </p>
+          </div>
 
-                          {/* Activity booking URL */}
-                          {scheduleItem.type === 'activity' && scheduleItem.bookingUrl && (
-                            <div className="mt-2">
-                              <Button 
-                                size="sm" 
-                                className="bg-primary hover:bg-primary-hover text-primary-foreground cursor-pointer"
-                                onClick={() => window.open(scheduleItem.bookingUrl, '_blank')}
-                              >
-                                <Globe className="w-4 h-4 mr-2" />
-                                Book Activity
-                              </Button>
-                            </div>
-                          )}
-                                
-                                {/* Enhanced flight details */}
-                                {scheduleItem.type === 'flight' && (
-                                  <div className="bg-blue-50 rounded-lg p-4 mt-2">
-                                    <div className="space-y-3">
-                                      {scheduleItem.flight_origin && scheduleItem.flight_destination && (
-                                        <div className="bg-white rounded-lg p-3">
-                                          <div className="flex items-center justify-between">
-                                            <div className="text-center">
-                                              <div className="font-bold text-lg text-blue-800">{scheduleItem.flight_origin}</div>
-                                              <div className="text-xs text-gray-500">Departure</div>
-                                              {scheduleItem.departure_time && (
-                                                <div className="text-sm font-medium">{scheduleItem.departure_time}</div>
-                                              )}
-                                            </div>
-                                            <div className="flex items-center space-x-2 text-blue-600">
-                                              <Plane className="w-5 h-5" />
-                                              {scheduleItem.flight_duration && (
-                                                <span className="text-xs font-medium">{scheduleItem.flight_duration}</span>
-                                              )}
-                                            </div>
-                                            <div className="text-center">
-                                              <div className="font-bold text-lg text-blue-800">{scheduleItem.flight_destination}</div>
-                                              <div className="text-xs text-gray-500">Arrival</div>
-                                              {scheduleItem.arrival_time && (
-                                                <div className="text-sm font-medium">{scheduleItem.arrival_time}</div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
-                                      
-                                      <div className="grid grid-cols-2 gap-4 text-sm">
-                                        {scheduleItem.class && (
-                                          <div>
-                                            <span className="text-gray-500">Class:</span>
-                                            <span className="ml-2 font-medium">{scheduleItem.class}</span>
-                                          </div>
+          {/* Vertical Timeline */}
+          <div className="relative">
+            {/* Timeline Line */}
+            <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-200 via-indigo-300 to-purple-400 rounded-full"></div>
+            
+            {dayWiseData.map((dayData) => {
+              const dayTotal = dayData.schedule.reduce((sum, item) => {
+                const price = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price || 0;
+                return sum + price;
+              }, 0);
+
+              return (
+                <div key={dayData.day} className="relative mb-12 last:mb-0">
+                  {/* Day Marker */}
+                  <div className="absolute left-6 top-6 w-4 h-4 bg-white border-4 border-blue-500 rounded-full shadow-lg z-10">
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full"></div>
+                  </div>
+
+                  {/* Day Card */}
+                  <div className="ml-16 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
+                    {/* Day Header */}
+                    <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-6 border-b border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                            {dayData.day}
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900">Day {dayData.day}</h3>
+                            <p className="text-sm text-gray-600">
+                              {dayData.schedule.length} experiences planned
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {dayTotal > 0 && (
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-green-600">${dayTotal.toLocaleString()}</div>
+                            <div className="text-xs text-gray-500">estimated cost</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Day Content */}
+                    <div className="p-6">
+                      <div className="space-y-6">
+                        {dayData.schedule.map((scheduleItem, itemIndex) => (
+                          <div
+                            key={`${dayData.day}-${itemIndex}`}
+                            className="group/item relative bg-gray-50 rounded-xl p-6 hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-gray-200"
+                          >
+                            {/* Time Badge */}
+                            {(scheduleItem.departure_time || scheduleItem.start_time || scheduleItem.check_in || scheduleItem.time) && (
+                              <div className="absolute -top-3 left-6">
+                                <div className="bg-white border-2 border-blue-200 px-3 py-1 rounded-full shadow-sm">
+                                  <div className="flex items-center space-x-1 text-xs font-medium text-blue-700">
+                                    <Clock className="w-3 h-3" />
+                                    <span>{scheduleItem.departure_time || scheduleItem.start_time || scheduleItem.check_in || scheduleItem.time}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="flex items-start space-x-4">
+                              {/* Activity Icon */}
+                              <div className="flex-shrink-0 w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-200 group-hover/item:shadow-md transition-all duration-300">
+                                {getTypeIcon(scheduleItem.type)}
+                              </div>
+
+                              {/* Activity Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-3 mb-2">
+                                      <Badge className={`${getTypeColor(scheduleItem.type)} font-medium px-3 py-1`}>
+                                        {scheduleItem.type}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover/item:text-blue-600 transition-colors">
+                                      {scheduleItem.name || 
+                                       scheduleItem.flight_name ||
+                                       (scheduleItem.airline && `${scheduleItem.airline} Flight`) ||
+                                       (scheduleItem.from && scheduleItem.to && `${scheduleItem.from} to ${scheduleItem.to}`) ||
+                                       `${scheduleItem.type.charAt(0).toUpperCase() + scheduleItem.type.slice(1)}`}
+                                    </h4>
+                                    
+                                    {scheduleItem.description && (
+                                      <p className="text-gray-600 leading-relaxed mb-3">
+                                        {scheduleItem.description}
+                                      </p>
+                                    )}
+
+                                    {/* Location */}
+                                    {scheduleItem.location && (
+                                      <div className="flex items-center space-x-2 text-sm text-gray-500 mb-3">
+                                        <MapPin className="w-4 h-4" />
+                                        <span>
+                                          {typeof scheduleItem.location === 'string' 
+                                            ? scheduleItem.location 
+                                            : 'Location coordinates available'
+                                          }
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Price */}
+                                  {scheduleItem.price && (
+                                    <div className="text-right ml-4">
+                                      <div className="text-lg font-bold text-green-600">${scheduleItem.price.toLocaleString()}</div>
+                                      <div className="text-xs text-gray-500">per person</div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Special Details Based on Type */}
+                                {scheduleItem.type === 'flight' && scheduleItem.flight_origin && scheduleItem.flight_destination && (
+                                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                                    <div className="flex items-center justify-between">
+                                      <div className="text-center">
+                                        <div className="text-2xl font-bold text-blue-800">{scheduleItem.flight_origin}</div>
+                                        <div className="text-xs text-gray-500">Departure</div>
+                                        {scheduleItem.departure_time && (
+                                          <div className="text-sm font-medium">{scheduleItem.departure_time}</div>
                                         )}
-                                        {scheduleItem.airline && (
-                                          <div>
-                                            <span className="text-gray-500">Airline:</span>
-                                            <span className="ml-2 font-medium">{scheduleItem.airline}</span>
-                                          </div>
+                                      </div>
+                                      <div className="flex items-center space-x-2 text-blue-600">
+                                        <Plane className="w-6 h-6" />
+                                        {scheduleItem.flight_duration && (
+                                          <span className="text-sm font-medium">{scheduleItem.flight_duration}</span>
+                                        )}
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-2xl font-bold text-blue-800">{scheduleItem.flight_destination}</div>
+                                        <div className="text-xs text-gray-500">Arrival</div>
+                                        {scheduleItem.arrival_time && (
+                                          <div className="text-sm font-medium">{scheduleItem.arrival_time}</div>
                                         )}
                                       </div>
                                     </div>
                                   </div>
                                 )}
-                                
-                                {/* Enhanced hotel details */}
-                                {scheduleItem.type === 'hotel' && (
-                                  <div className="bg-green-50 rounded-lg p-4 mt-2">
-                                    <div className="space-y-3">
-                                      {/* Hotel timing information */}
-                                      {(scheduleItem.check_in || scheduleItem.check_in_time) && (
-                                        <div className="bg-white rounded-lg p-3">
-                                          <div className="flex items-center justify-center">
-                                            <div className="text-center">
-                                              <div className="text-sm text-gray-500 mb-1">Check-in</div>
-                                              <div className="font-semibold text-green-700">
-                                                {scheduleItem.check_in_time || scheduleItem.check_in}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
 
-                                      {/* Amenities */}
-                                      {scheduleItem.amenities && scheduleItem.amenities.length > 0 && (
-                                        <div className="text-sm">
-                                          <span className="text-gray-500 font-medium">Amenities:</span>
-                                          <div className="mt-2 flex flex-wrap gap-1">
-                                            {scheduleItem.amenities.map((amenity, i) => (
-                                              <span key={i} className="bg-white px-2 py-1 rounded text-xs text-gray-600 border">
-                                                {amenity}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
+                                {scheduleItem.type === 'hotel' && scheduleItem.amenities && scheduleItem.amenities.length > 0 && (
+                                  <div className="bg-green-50 rounded-lg p-4 mb-4">
+                                    <h5 className="font-medium text-green-800 mb-2">Amenities</h5>
+                                    <div className="flex flex-wrap gap-2">
+                                      {scheduleItem.amenities.map((amenity, i) => (
+                                        <span key={i} className="bg-white px-3 py-1 rounded-full text-xs text-gray-600 border">
+                                          {amenity}
+                                        </span>
+                                      ))}
                                     </div>
                                   </div>
                                 )}
-                          
-                          {scheduleItem.price && (
-                                  <div className="flex items-center justify-between mt-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
-                                    <div className="flex items-center space-x-2">
-                                      <CreditCard className="w-5 h-5 text-green-600" />
-                                      <span className="font-semibold text-green-800">${scheduleItem.price.toLocaleString()}</span>
-                              </div>
-                                    {/* <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                                      <ShoppingCart className="w-4 h-4 mr-2" />
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center space-x-3">
+                                  {scheduleItem.type === 'activity' && scheduleItem.bookingUrl && (
+                                    <Button 
+                                      size="sm" 
+                                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                                      onClick={() => window.open(scheduleItem.bookingUrl, '_blank')}
+                                    >
+                                      <Globe className="w-4 h-4 mr-2" />
                                       Book Now
-                                    </Button> */}
+                                    </Button>
+                                  )}
+                                  
+                                  {scheduleItem.location && typeof scheduleItem.location === 'object' && 'latitude' in scheduleItem.location && 'longitude' in scheduleItem.location && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => {
+                                        const location = scheduleItem.location as { latitude: number; longitude: number };
+                                        window.open(`https://maps.google.com/?q=${location.latitude},${location.longitude}`, '_blank');
+                                      }}
+                                    >
+                                      <MapPin className="w-4 h-4 mr-2" />
+                                      View Map
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
-                ))}
-                    </div>
-              </div>
-            </CardContent>
-              )}
-          </Card>
-          );
-        })
+                </div>
+              );
+            })}
+          </div>
+        </div>
       ) : (
-        // Fallback to old itinerary format
-        Object.entries(groupedByDay)
-          .sort(([a], [b]) => parseInt(a) - parseInt(b))
-          .map(([day, items]) => (
-          <Card key={day}>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4" />
-                <span>Day {day}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {items
-                  .sort((a, b) => a.time.localeCompare(b.time))
-                  .map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors"
-                    >
-                      <div className="flex-shrink-0 mt-1">
-                        {getTypeIcon(item.type)}
+        // Fallback for old itinerary format
+        <div className="space-y-6">
+          {/* Debug Banner */}
+          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 mb-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              <span className="text-yellow-800 font-medium">FALLBACK VIEW - Using Old Itinerary Format</span>
+            </div>
+          </div>
+          {Object.entries(groupedByDay)
+            .sort(([a], [b]) => parseInt(a) - parseInt(b))
+            .map(([day, items]) => (
+              <Card key={day} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <CardTitle className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
+                      {day}
+                    </div>
+                    <div>
+                      <span className="text-xl">Day {day}</span>
+                      <div className="text-sm text-gray-500 font-normal">
+                        {items.length} activities
                       </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {items
+                      .sort((a, b) => a.time.localeCompare(b.time))
+                      .map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-white transition-colors"
+                        >
+                          <div className="flex-shrink-0 w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                            {getTypeIcon(item.type)}
+                          </div>
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
                               <Badge className={getTypeColor(item.type)}>
                                 {item.type}
                               </Badge>
-                              <span className="text-sm text-muted-foreground flex items-center">
+                              <span className="text-sm text-gray-500 flex items-center">
                                 <Clock className="w-3 h-3 mr-1" />
                                 {item.time}
                               </span>
                             </div>
-                            
-                            <h4 className="font-medium">{item.activity}</h4>
-                            <p className="text-sm text-muted-foreground flex items-center mt-1">
+                            <h4 className="font-medium text-gray-900">{item.activity}</h4>
+                            <p className="text-sm text-gray-600 flex items-center mt-1">
                               <MapPin className="w-3 h-3 mr-1" />
-                              <span>{item.location}</span>
+                              {item.location}
                             </p>
                             {item.description && (
-                              <p className="text-sm text-muted-foreground mt-2">
-                                {item.description}
-                              </p>
+                              <p className="text-sm text-gray-600 mt-2">{item.description}</p>
                             )}
-                            
-                            {/* Price and Booking Info */}
                             {item.price && (
-                              <div className="flex items-center justify-between mt-3 p-2 bg-muted/30 rounded">
+                              <div className="flex items-center justify-between mt-3 p-2 bg-green-50 rounded">
                                 <div className="flex items-center space-x-2 text-sm">
                                   <CreditCard className="w-4 h-4 text-green-600" />
                                   <span className="font-medium">${item.price}</span>
-                                  <span className="text-muted-foreground">
-                                    per {item.type === 'accommodation' ? 'night' : 'person'}
-                                  </span>
                                 </div>
                                 {item.bookingAvailable && (
                                   <Badge className="bg-green-100 text-green-800">
@@ -887,15 +868,13 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                               </div>
                             )}
                           </div>
-                          
                         </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+        </div>
       )}
 
       {/* Enhanced Upsell Options */}
