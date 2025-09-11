@@ -3,7 +3,7 @@ image: node:20
 pipelines:
   default:
     - step:
-        name: Build and Deploy
+        name: Build React App
         caches:
           - node
         script:
@@ -11,14 +11,3 @@ pipelines:
           - npm run build
         artifacts:
           - dist/**
-    - step:
-        name: Deploy to Pages
-        deployment: production
-        script:
-          - pipe: atlassian/bitbucket-pages-deploy:1.0.0
-            variables:
-              BITBUCKET_REPO_OWNER: $BITBUCKET_REPO_OWNER
-              BITBUCKET_REPO_SLUG: $BITBUCKET_REPO_SLUG
-              BITBUCKET_TOKEN: $BITBUCKET_TOKEN
-              BITBUCKET_DEPLOYMENT: $BITBUCKET_DEPLOYMENT
-              BITBUCKET_DEPLOYMENT_ENVIRONMENT: $BITBUCKET_DEPLOYMENT_ENVIRONMENT
