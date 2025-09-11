@@ -1,51 +1,20 @@
 # This workflow is disabled - using deploy-simple.yml instead
+# To re-enable, uncomment the sections below
+
 # name: Deploy to GitHub Pages (Disabled)
-
 # on:
-#   push:
-#     branches: [ main ]
-#   workflow_dispatch: false
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'yarn'
-        
-    - name: Install dependencies
-      run: yarn install --frozen-lockfile
-      
-    - name: Build
-      run: yarn build
-      
-    - name: Create 404.html for GitHub Pages
-      run: cp dist/index.html dist/404.html
-      
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
-      
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: ./dist
-        
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
-      timeout-minutes: 10
+#   workflow_dispatch:
+#     inputs:
+#       logLevel:
+#         description: 'Log level'
+#         required: false
+#         default: 'warning'
+#         type: choice
+#         options:
+#         - trace
+#         - debug
+#         - info
+#         - warning
+#         - error
+#         - fatal
+#         - panic
