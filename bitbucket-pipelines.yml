@@ -3,11 +3,13 @@ image: node:20
 pipelines:
   default:
     - step:
-        name: Build React App
+        name: Build and Deploy React App
         caches:
           - node
         script:
           - npm ci
           - npm run build
+          - echo "Build completed successfully"
+          - ls -la dist/
         artifacts:
           - dist/**
