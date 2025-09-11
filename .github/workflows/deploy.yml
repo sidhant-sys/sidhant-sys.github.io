@@ -1,9 +1,10 @@
-name: Deploy to GitHub Pages (Disabled)
+# This workflow is disabled - using deploy-simple.yml instead
+# name: Deploy to GitHub Pages (Disabled)
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch: false
+# on:
+#   push:
+#     branches: [ main ]
+#   workflow_dispatch: false
 
 permissions:
   contents: read
