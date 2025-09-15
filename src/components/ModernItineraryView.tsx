@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Calendar, 
   MapPin, 
   Plane, 
-  ArrowRight,
   Building,
   Utensils,
   Car,
   Activity,
-  ChevronUp
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
+import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
 import { DailyIntelligence } from './DailyIntelligence';
+import { useCurrency } from '../contexts/CurrencyContext';
+import { useStackedFixedContext } from '../contexts/StackedFixedContext';
+import { capitalize, professionalColors } from './ui/utils';
 
 interface DayScheduleItem {
   type: 'flight' | 'hotel' | 'activity' | 'meal' | 'commute';
@@ -41,11 +44,18 @@ interface DayScheduleItem {
   price?: number | string;
   duration?: string;
   time?: string;
+  generated_images?: string[];
 }
 
 interface DayData {
   day: number;
   schedule: DayScheduleItem[];
+  upsell?: {
+    type: string;
+    name: string;
+    upgrade_cost: number | string;
+    benefits?: string[];
+  }[];
   daily_intelligence?: {
     weather?: { conditions?: string; recommendations?: string[]; };
     daily_tips?: { best_times?: string[]; local_insights?: string[]; cultural_notes?: string[]; };
@@ -57,6 +67,13 @@ interface ModernItineraryViewProps {
   dayWiseData: DayData[];
   onBack?: () => void;
   dates?: string;
+  onModificationsChange?: (hasModifications: boolean) => void;
+  globalUpsells?: {
+    type: string;
+    name: string;
+    upgrade_cost: number | string;
+    benefits?: string[];
+  }[];
 }
 
 const getTypeIcon = (type: string) => {
@@ -106,16 +123,166 @@ const getTypeLabel = (type: string) => {
     case 'commute':
       return 'Transport';
     default:
-      return type.charAt(0).toUpperCase() + type.slice(1);
+      return capitalize(type);
   }
+};
+
+// UpsellCard Component
+interface UpsellCardProps {
+  upsell: any;
+  upsellId: string;
+  isSelected: boolean;
+  discountPercent: number;
+  onToggleSelection: (upsellId: string) => void;
+  formatPrice: (price: number) => string;
+}
+
+const UpsellCard: React.FC<UpsellCardProps> = ({
+  upsell,
+  upsellId,
+  isSelected,
+  discountPercent,
+  onToggleSelection,
+  formatPrice
+}) => {
+  const upgradePrice = typeof upsell.upgrade_cost === 'string' ? parseFloat(upsell.upgrade_cost) || 0 : upsell.upgrade_cost || 0;
+  const originalPrice = Math.round(upgradePrice * (1 + discountPercent / 100));
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleSelection(upsellId);
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only handle card clicks if not clicking on checkbox area
+    const target = e.target as HTMLElement;
+    if (!target.closest('[data-checkbox-area]')) {
+      onToggleSelection(upsellId);
+    }
+  };
+
+  return (
+    <div
+      className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 cursor-pointer ${professionalColors.interactive.border} ${professionalColors.interactive.borderHover} ${professionalColors.interactive.hover}`}
+      onClick={handleCardClick}
+    >
+      {/* Checkbox Area */}
+      <div 
+        data-checkbox-area="true"
+        className="flex-shrink-0 cursor-pointer"
+        onClick={handleCheckboxClick}
+      >
+        <Checkbox
+          checked={isSelected}
+          className={`w-5 h-5 bg-white ${professionalColors.interactive.border} hover:border-slate-400 cursor-pointer pointer-events-none`}
+          style={{
+            '--tw-bg-opacity': isSelected ? '1' : undefined,
+            backgroundColor: isSelected ? professionalColors.appBlue[500] : undefined,
+            borderColor: isSelected ? professionalColors.appBlue[500] : undefined,
+            color: isSelected ? 'white' : undefined,
+          } as React.CSSProperties}
+        />
+      </div>
+
+      {/* Icon */}
+      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+        {upsell.type === 'hotel' && '🏨'}
+        {upsell.type === 'flight' && '✈️'}
+        {upsell.type === 'activity' && '🎯'}
+        {upsell.type === 'dining' && '🍽️'}
+        {upsell.type === 'transport' && '🚗'}
+      </div>
+
+      {/* Content Area */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <h5 className={`font-semibold ${professionalColors.text.primary} text-sm truncate`}>{upsell.name}</h5>
+            <p className={`text-xs ${professionalColors.text.muted}`}>{capitalize(upsell.type)} Upgrade</p>
+            
+            {/* Benefits - Non-clickable informational text */}
+            <div className="mt-1">
+              <ul className={`text-xs ${professionalColors.text.secondary} space-y-0.5`}>
+                {upsell.benefits?.slice(0, 2).map((benefit: string, idx: number) => (
+                  <li key={idx} className="flex items-start gap-1 truncate">
+                    <span className={`${professionalColors.success.text} flex-shrink-0`}>•</span>
+                    <span className="truncate">{benefit}</span>
+                  </li>
+                ))}
+                {upsell.benefits?.length > 2 && (
+                  <li className={`${professionalColors.text.light} text-xs italic`}>
+                    {upsell.benefits.length - 2} additional benefit{upsell.benefits.length - 2 !== 1 ? 's' : ''} included
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+          
+          {/* Pricing & Badge */}
+          <div className="text-right ml-3 flex-shrink-0">
+            <div className={`${professionalColors.warning.bg} ${professionalColors.warning.text} px-2 py-1 rounded-full text-xs font-bold mb-1`}>
+              {discountPercent}% OFF
+            </div>
+            <div className={`text-xs ${professionalColors.text.light} line-through`}>
+              {formatPrice(originalPrice)}
+            </div>
+            <div className={`text-sm font-bold ${professionalColors.text.primary}`}>
+              {formatPrice(upgradePrice)}
+            </div>
+            <div className={`text-xs ${professionalColors.success.text}`}>
+              Save {formatPrice(originalPrice - upgradePrice)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
   dayWiseData,
-  onBack,
-  dates
+  onBack: _onBack,
+  dates: _dates,
+  onModificationsChange,
+  globalUpsells = []
 }) => {
   const [expandedDay, setExpandedDay] = useState<number | null>(1); // Default to day 1 expanded
+  const [selectedActivitiesByDay, setSelectedActivitiesByDay] = useState<Map<number, Set<string>>>(new Map());
+  const [initialSelections, setInitialSelections] = useState<Map<number, Set<string>>>(new Map());
+  const [selectedGlobalUpsells, setSelectedGlobalUpsells] = useState<Set<string>>(new Set());
+  const [isCombinedHeaderSticky, setIsCombinedHeaderSticky] = useState(false);
+  const [isUpsellExpanded, setIsUpsellExpanded] = useState(false);
+  const [isActivitiesExpanded, setIsActivitiesExpanded] = useState(true); // Default to expanded
+  const { formatPrice: currencyFormatPrice } = useCurrency();
+  const { registerFixedElement, unregisterFixedElement, getTopPosition, getContentPadding } = useStackedFixedContext();
+  
+  const STICKY_HEADER_ID = 'itinerary-sticky-header';
+  const STICKY_HEADER_HEIGHT = 144; // More accurate height calculation
+
+  // Initialize all activities as selected when component mounts or when new day data is available
+  useEffect(() => {
+    if (dayWiseData && dayWiseData.length > 0) {
+      const initialMap = new Map<number, Set<string>>();
+      
+      dayWiseData.forEach(dayData => {
+        const allActivityIds = new Set<string>();
+        dayData.schedule.forEach((_, index) => {
+          allActivityIds.add(`${dayData.day}-${index}`);
+        });
+        initialMap.set(dayData.day, new Set(allActivityIds));
+      });
+      
+      setSelectedActivitiesByDay(initialMap);
+      
+      // Create a deep copy of initialMap for initialSelections
+      const initialSelectionsCopy = new Map<number, Set<string>>();
+      for (const [dayNumber, activities] of initialMap.entries()) {
+        initialSelectionsCopy.set(dayNumber, new Set(activities));
+      }
+      setInitialSelections(initialSelectionsCopy);
+    }
+  }, [dayWiseData]);
 
   // Ensure day 1 is expanded when component mounts or data changes
   useEffect(() => {
@@ -123,6 +290,53 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
       setExpandedDay(1);
     }
   }, [dayWiseData, expandedDay]);
+
+  // Detect modifications and notify parent
+  useEffect(() => {
+    if (!onModificationsChange || initialSelections.size === 0) return;
+    
+    // Compare current selections with initial selections
+    let hasChanges = false;
+    
+    // Check if the maps have the same keys
+    if (selectedActivitiesByDay.size !== initialSelections.size) {
+      hasChanges = true;
+    } else {
+      // Check each day's selections
+      for (const [dayNumber, currentSelections] of selectedActivitiesByDay.entries()) {
+        const initialDaySelections = initialSelections.get(dayNumber);
+        
+        if (!initialDaySelections) {
+          hasChanges = true;
+          break;
+        }
+        
+        // Check if sets are different
+        if (currentSelections.size !== initialDaySelections.size) {
+          hasChanges = true;
+          break;
+        }
+        
+        // Check if all items are the same
+        for (const item of currentSelections) {
+          if (!initialDaySelections.has(item)) {
+            hasChanges = true;
+            break;
+          }
+        }
+        
+        if (hasChanges) break;
+      }
+    }
+    
+    // Check global upsell selections (any upsell selection is considered a modification)
+    if (!hasChanges && selectedGlobalUpsells.size > 0) {
+      hasChanges = true;
+    }
+    
+    onModificationsChange(hasChanges);
+  }, [selectedActivitiesByDay, selectedGlobalUpsells, initialSelections, onModificationsChange]);
+
 
   // Auto-scroll to top when day changes
   useEffect(() => {
@@ -136,6 +350,44 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
+  // Scroll detection for combined sticky header
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          // Check if day header has been scrolled past - this triggers the combined sticky behavior
+          const dayHeaderElement = document.querySelector('[data-day-header]') as HTMLElement;
+          if (dayHeaderElement) {
+            const headerRect = dayHeaderElement.getBoundingClientRect();
+            const mainHeaderHeight = getContentPadding(); // Height of all fixed headers above
+            const shouldBeSticky = headerRect.top <= mainHeaderHeight;
+            
+            if (shouldBeSticky !== isCombinedHeaderSticky) {
+              setIsCombinedHeaderSticky(shouldBeSticky);
+              
+              if (shouldBeSticky) {
+                registerFixedElement(STICKY_HEADER_ID, STICKY_HEADER_HEIGHT, 90);
+              } else {
+                unregisterFixedElement(STICKY_HEADER_ID);
+              }
+            }
+          }
+          
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      unregisterFixedElement(STICKY_HEADER_ID);
+    };
+  }, [expandedDay, isCombinedHeaderSticky, registerFixedElement, unregisterFixedElement, getContentPadding]);
+
   const formatTime = (time: string) => {
     if (!time) return '';
     return time;
@@ -144,7 +396,87 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
   const formatPrice = (price: number | string) => {
     if (!price) return '';
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    return `$${numPrice.toLocaleString()}`;
+    if (numPrice === 0) return '';
+    return currencyFormatPrice(numPrice);
+  };
+
+  const toggleActivitySelection = (activityId: string) => {
+    const dayNumber = parseInt(activityId.split('-')[0]);
+    setSelectedActivitiesByDay(prevMap => {
+      const newMap = new Map(prevMap);
+      const daySelections = newMap.get(dayNumber) || new Set<string>();
+      const newDaySelections = new Set(daySelections);
+      
+      if (newDaySelections.has(activityId)) {
+        newDaySelections.delete(activityId);
+      } else {
+        newDaySelections.add(activityId);
+      }
+      
+      newMap.set(dayNumber, newDaySelections);
+      return newMap;
+    });
+  };
+
+  const toggleGlobalUpsellSelection = (upsellId: string) => {
+    setSelectedGlobalUpsells(prevSet => {
+      const newSet = new Set(prevSet);
+      
+      if (newSet.has(upsellId)) {
+        newSet.delete(upsellId);
+      } else {
+        newSet.add(upsellId);
+      }
+      
+      return newSet;
+    });
+  };
+
+  // Calculate total price of selected activities for a given day
+  const getSelectedActivitiesTotal = (dayNumber: number, schedule: any[]) => {
+    const daySelections = selectedActivitiesByDay.get(dayNumber) || new Set<string>();
+    return schedule.reduce((sum, item, index) => {
+      const activityId = `${dayNumber}-${index}`;
+      if (daySelections.has(activityId)) {
+        const price = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price || 0;
+        return sum + price;
+      }
+      return sum;
+    }, 0);
+  };
+
+  // Calculate total price of selected global upsells
+  const getSelectedGlobalUpsellsTotal = () => {
+    return globalUpsells.reduce((sum, item, index) => {
+      const upsellId = `global-upsell-${index}`;
+      if (selectedGlobalUpsells.has(upsellId)) {
+        const price = typeof item.upgrade_cost === 'string' ? parseFloat(item.upgrade_cost) || 0 : item.upgrade_cost || 0;
+        return sum + price;
+      }
+      return sum;
+    }, 0);
+  };
+
+  // Calculate total day cost including activities only (upsells are global)
+  const getTotalDayCost = (dayNumber: number, schedule: any[]) => {
+    return getSelectedActivitiesTotal(dayNumber, schedule);
+  };
+
+  // Get count of selected activities for a day
+  const getSelectedActivitiesCount = (dayNumber: number) => {
+    const daySelections = selectedActivitiesByDay.get(dayNumber) || new Set<string>();
+    return daySelections.size;
+  };
+
+  // Calculate total trip cost across all days including global upsells
+  const getTotalTripCost = () => {
+    if (!dayWiseData) return 0;
+    
+    const dailyCosts = dayWiseData.reduce((total, dayData) => {
+      return total + getTotalDayCost(dayData.day, dayData.schedule || []);
+    }, 0);
+    
+    return dailyCosts + getSelectedGlobalUpsellsTotal();
   };
 
   const getItemTitle = (item: DayScheduleItem) => {
@@ -169,6 +501,99 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
+      {/* Combined Sticky Header - Shows when day header is scrolled past */}
+      {isCombinedHeaderSticky && (
+        <div 
+          className="fixed left-0 right-0 z-[90] bg-white shadow-lg border-b border-gray-200"
+          style={{
+            top: `${getTopPosition(STICKY_HEADER_ID)}px`,
+            marginTop: '16px',
+            paddingTop: '16px',
+            backgroundColor: '#ffffff',
+          }}
+        >
+          <div className="max-w-6xl mx-auto" style={{paddingLeft: '14%', paddingRight: '14%', paddingTop: '16px', paddingBottom: '16px'}}>
+            {/* Day Navigation Section */}
+            <div className="py-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Daily Itinerary</h2>
+                
+                <div className="flex space-x-2">
+                  {(dayWiseData || []).map((dayData) => (
+                    <button
+                      key={dayData.day}
+                      onClick={() => setExpandedDay(expandedDay === dayData.day ? null : dayData.day)}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-200 cursor-pointer ${
+                        expandedDay === dayData.day
+                          ? 'bg-blue-500 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Day {dayData.day}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Day Header Section */}
+            {expandedDay && (() => {
+              const dayData = dayWiseData?.find(d => d.day === expandedDay);
+              if (!dayData) return null;
+              
+              const safeSchedule = dayData.schedule || [];
+              const dayTotal = getTotalDayCost(dayData.day, safeSchedule);
+
+              return (
+                <div className="py-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">Day {dayData.day}</h3>
+                        <p className="text-sm text-gray-600">{safeSchedule.length} activities planned</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {dayTotal > 0 ? (
+                        <>
+                          <div className="text-right space-y-2">
+                            {/* Trip Total - Primary */}
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="text-xs text-gray-500 uppercase tracking-wide">Total</span>
+                              <div className="text-xl font-bold text-gray-900">{formatPrice(getTotalTripCost())}</div>
+                            </div>
+                            
+                            {/* Day Cost - Secondary with subtle styling */}
+                            <div className="flex items-center justify-end gap-2 px-3 py-1 bg-gray-50 rounded-lg">
+                              <span className="text-xs text-gray-500">Today</span>
+                              <div className="text-sm font-medium text-gray-700">{formatPrice(dayTotal)}</div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-right space-y-2">
+                          {/* Trip Total - Primary */}
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Total</span>
+                            <div className="text-xl font-bold text-gray-900">{formatPrice(getTotalTripCost())}</div>
+                          </div>
+                          
+                          {/* No fees message */}
+                          <div className="flex items-center justify-end">
+                            <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-medium">
+                              No fees today
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
       {/* Compact Trip Header */}
       {/* <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 px-4">
         <div className="flex items-center justify-between">
@@ -189,9 +614,13 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
       </div> */}
 
       {/* Compact Day Navigation */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 px-4">
+      <div 
+        data-day-navigation 
+        className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 px-4"
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Daily Itinerary</h2>
+          
           <div className="flex space-x-2">
             {(dayWiseData || []).map((dayData) => (
               <button
@@ -216,15 +645,20 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
         if (!dayData) return null;
         
         const safeSchedule = dayData.schedule || [];
-        const dayTotal = safeSchedule.reduce((sum, item) => {
-          const price = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price || 0;
-          return sum + price;
-        }, 0);
+        const dayTotal = getTotalDayCost(dayData.day, safeSchedule);
 
         return (
           <div className="space-y-4">
-            {/* Day Header */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 px-4">
+            {/* Spacer for sticky header */}
+            {isCombinedHeaderSticky && (
+              <div style={{ height: `${STICKY_HEADER_HEIGHT}px` }} className="w-full" />
+            )}
+            
+            {/* Day Header - Normal (sticky behavior handled by combined header) */}
+            <div 
+              data-day-header
+              className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 px-4"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex">
                   <div>
@@ -232,14 +666,43 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
                     <p className="text-sm text-gray-600">{safeSchedule.length} activities planned</p>
                   </div>
                 </div>
-                {dayTotal > 0 && (
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-green-600">{formatPrice(dayTotal)}</div>
-                    <div className="text-xs text-gray-500">estimated cost</div>
-                  </div>
-                )}
+                <div className="text-right">
+                  {dayTotal > 0 ? (
+                      <>
+                        <div className="text-right space-y-2">
+                          {/* Trip Total - Primary */}
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Total</span>
+                            <div className="text-xl font-bold text-gray-900">{formatPrice(getTotalTripCost())}</div>
+                          </div>
+                          
+                          {/* Day Cost - Secondary with subtle styling */}
+                          <div className="flex items-center justify-end gap-2 px-3 py-1 bg-gray-50 rounded-lg">
+                            <span className="text-xs text-gray-500">Today</span>
+                            <div className="text-sm font-medium text-gray-700">{formatPrice(dayTotal)}</div>
+                          </div>
+                        </div>
+                      </>
+                  ) : (
+                    <div className="text-right space-y-2">
+                      {/* Trip Total - Primary */}
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">Total</span>
+                        <div className="text-xl font-bold text-gray-900">{formatPrice(getTotalTripCost())}</div>
+                      </div>
+                      
+                      {/* No fees message */}
+                      <div className="flex items-center justify-end">
+                        <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-medium">
+                          No fees today
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+
 
             {/* Daily Intelligence - Compact */}
             {dayData.daily_intelligence && (
@@ -252,81 +715,225 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
               </div>
             )}
 
-            {/* Activities List - Compact */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Activities</h4>
-              <div className="space-y-3">
-                {safeSchedule.map((item, itemIndex) => (
-                  <div
-                    key={`${dayData.day}-${itemIndex}`}
-                    className="flex items-center space-x-4 p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all duration-200"
-                  >
-                    {/* Activity Icon */}
-                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center">
-                      <div className="text-blue-600">
-                        {getTypeIcon(item.type)}
+            {/* Upgrade Options - Collapsible Section */}
+            {globalUpsells.length > 0 && (
+              <div className={`${professionalColors.section.bg} rounded-lg ${professionalColors.section.shadow} ${professionalColors.section.border} border overflow-hidden mb-4`}>
+                {/* Header - Always Visible */}
+                <div 
+                  className={`p-2 cursor-pointer ${professionalColors.interactive.hover} transition-colors duration-200`}
+                  onClick={() => setIsUpsellExpanded(!isUpsellExpanded)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                        <span className="text-gray-600 text-sm">✨</span>
+                      </div>
+                      <div>
+                        <h4 className={`text-lg font-bold ${professionalColors.text.primary}`}>
+                          Upgrade Your Experience
+                          {selectedGlobalUpsells.size > 0 && (
+                            <span className={`ml-2 text-sm font-medium ${professionalColors.text.secondary}`}>
+                              (+{formatPrice(getSelectedGlobalUpsellsTotal())})
+                            </span>
+                          )}
+                        </h4>
+                        <p className={`text-sm ${professionalColors.text.muted}`}>
+                          {selectedGlobalUpsells.size > 0 
+                            ? `${selectedGlobalUpsells.size} upgrade${selectedGlobalUpsells.size !== 1 ? 's' : ''} selected • ${globalUpsells.length - selectedGlobalUpsells.size} more available`
+                            : `${globalUpsells.length} premium upgrades available • Limited time offers`
+                          }
+                        </p>
                       </div>
                     </div>
-
-                    {/* Activity Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <Badge className={`${getTypeColor(item.type)} font-medium px-2 py-1 text-xs`}>
-                              {getTypeLabel(item.type)}
-                            </Badge>
-                            {getItemTime(item) && (
-                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                {formatTime(getItemTime(item))}
-                              </span>
-                            )}
-                            {item.duration && (
-                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                {item.duration}
-                              </span>
-                            )}
-                          </div>
-                          
-                          <h5 className="font-semibold text-gray-900 text-sm mb-1">
-                            {getItemTitle(item)}
-                          </h5>
-                          
-                          {getItemSubtitle(item) && (
-                            <p className="text-xs text-gray-600 mb-1">
-                              {getItemSubtitle(item)}
-                            </p>
-                          )}
-
-                          {item.location && typeof item.location === 'string' && (
-                            <div className="flex items-center space-x-1 text-xs text-gray-500">
-                              <MapPin className="w-3 h-3" />
-                              <span>{item.location}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Price */}
-                        {item.price && (
-                          <div className="text-right">
-                            <div className="text-sm font-semibold text-green-600">{formatPrice(item.price)}</div>
-                          </div>
-                        )}
+                    <div className="flex items-center gap-2">
+                      <div className={`${professionalColors.warning.bg} ${professionalColors.warning.text} px-2 py-1 rounded-full text-xs font-bold`}>
+                        LIMITED
                       </div>
+                      <ChevronDown className={`w-5 h-5 ${professionalColors.text.muted} transition-transform duration-200 ${isUpsellExpanded ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Expandable Content */}
+                {isUpsellExpanded && (
+                  <div className="px-4 pb-4">
+                    <div className={`${professionalColors.warning.bg} ${professionalColors.warning.border} border rounded-lg p-3 mb-4`}>
+                      <p className={`text-center ${professionalColors.warning.text} text-sm font-medium`}>
+                        🔥 Special pricing ends in 24 hours! Save up to 25% on premium upgrades.
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {globalUpsells.map((upsell: any, upsellIndex: number) => {
+                        const upsellId = `global-upsell-${upsellIndex}`;
+                        const isSelected = selectedGlobalUpsells.has(upsellId);
+                        const discountPercent = 15 + (upsellIndex * 3) % 11;
+                        
+                        return (
+                          <UpsellCard
+                            key={upsellId}
+                            upsell={upsell}
+                            upsellId={upsellId}
+                            isSelected={isSelected}
+                            discountPercent={discountPercent}
+                            onToggleSelection={toggleGlobalUpsellSelection}
+                            formatPrice={formatPrice}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
+            )}
+
+            {/* Activities Section - Collapsible */}
+            <div className={`${professionalColors.section.bg} rounded-lg ${professionalColors.section.shadow} ${professionalColors.section.border} border overflow-hidden`}>
+              {/* Header - Always Visible */}
+              <div 
+                className={`p-2 cursor-pointer ${professionalColors.interactive.hover} transition-colors duration-200`}
+                onClick={() => setIsActivitiesExpanded(!isActivitiesExpanded)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                      <span className="text-gray-600 text-sm">📋</span>
+                    </div>
+                    <div>
+                      <h4 className={`text-lg font-bold ${professionalColors.text.primary}`}>
+                        Activities
+                        {getSelectedActivitiesCount(dayData.day) !== safeSchedule.length && (
+                          <span className={`ml-2 text-sm font-medium ${professionalColors.text.secondary}`}>
+                            ({getSelectedActivitiesCount(dayData.day)}/{safeSchedule.length} selected)
+                          </span>
+                        )}
+                      </h4>
+                      <p className={`text-sm ${professionalColors.text.muted}`}>
+                        {isActivitiesExpanded 
+                          ? `${safeSchedule.length} activities`
+                          : `${getSelectedActivitiesCount(dayData.day)} of ${safeSchedule.length} activities selected`
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className={`w-5 h-5 ${professionalColors.text.muted} transition-transform duration-200 ${isActivitiesExpanded ? 'rotate-180' : ''}`} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Expandable Content */}
+              {isActivitiesExpanded && (
+                <div className="px-4 pb-4">
+                  <div className="space-y-3">
+                    {safeSchedule.map((item, itemIndex) => {
+                      const activityId = `${dayData.day}-${itemIndex}`;
+                      const daySelections = selectedActivitiesByDay.get(dayData.day) || new Set<string>();
+                      const isSelected = daySelections.has(activityId);
+                      const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price || 0;
+                      
+                      return (
+                        <div
+                          key={activityId}
+                          className={`flex items-center space-x-4 p-3 rounded-lg border transition-all duration-200 ${professionalColors.interactive.border} ${professionalColors.interactive.borderHover} ${professionalColors.interactive.hover}`}
+                        >
+                          {/* Checkbox */}
+                          <div className="flex-shrink-0">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleActivitySelection(activityId)}
+                              className="w-5 h-5 bg-white border-gray-300 hover:border-blue-400"
+                              style={{
+                                '--tw-bg-opacity': isSelected ? '1' : undefined,
+                                backgroundColor: isSelected ? professionalColors.appBlue[500] : undefined,
+                                borderColor: isSelected ? professionalColors.appBlue[500] : undefined,
+                                color: isSelected ? 'white' : undefined,
+                              } as React.CSSProperties}
+                            />
+                          </div>
+
+                          {/* Activity Icon */}
+                          <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center">
+                            <div className="text-gray-600">
+                              {getTypeIcon(item.type)}
+                            </div>
+                          </div>
+
+                          {/* Activity Details */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <Badge className={`${getTypeColor(item.type)} font-medium px-2 py-1 text-xs`}>
+                                    {getTypeLabel(item.type)}
+                                  </Badge>
+                                  {getItemTime(item) && (
+                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                      {formatTime(getItemTime(item))}
+                                    </span>
+                                  )}
+                                  {item.duration && (
+                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                      {item.duration}
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                <h5 className="font-semibold text-gray-900 text-sm mb-1">
+                                  {getItemTitle(item)}
+                                </h5>
+                                
+                                {getItemSubtitle(item) && (
+                                  <p className="text-xs text-gray-600 mb-1">
+                                    {getItemSubtitle(item)}
+                                  </p>
+                                )}
+
+                                {item.location && typeof item.location === 'string' && 
+                                 item.type !== 'flight' && 
+                                 !item.flight_name && 
+                                 !item.airline && 
+                                 !item.flight_origin && 
+                                 !item.flight_destination &&
+                                 !(item.name && (item.name.toLowerCase().includes('departure') || item.name.toLowerCase().includes('arrival') || item.name.toLowerCase().includes('flight'))) &&
+                                 getItemSubtitle(item) !== item.location && (
+                                  <div className="flex items-center space-x-1 text-xs text-gray-500">
+                                    <MapPin className="w-3 h-3" />
+                                    <span>{item.location}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Price or No Fees Tag */}
+                              <div className="text-right">
+                                {itemPrice > 0 ? (
+                                  <div className="text-sm font-semibold text-gray-700">{formatPrice(itemPrice)}</div>
+                                ) : (
+                                  <div className="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-xs font-medium">
+                                    No fees involved
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
+
           </div>
         );
       })()}
+
 
       {/* Scroll to Top Button */}
       <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+          className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center cursor-pointer"
           title="Scroll to top"
         >
           <ChevronUp className="w-6 h-6" />

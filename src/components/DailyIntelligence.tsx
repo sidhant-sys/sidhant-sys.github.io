@@ -110,9 +110,9 @@ export const DailyIntelligence: React.FC<DailyIntelligenceProps> = ({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center">
-              <Lightbulb className="w-3 h-3 text-blue-600" />
+              <Thermometer className="w-3 h-3 text-blue-600" />
             </div>
-            <span className="text-sm font-medium text-gray-900">Day {day} Intelligence</span>
+            <span className="text-sm font-medium text-gray-900">Weather Intelligence</span>
           </div>
           <button
             onClick={() => setIsExpanded(!isExpanded)}

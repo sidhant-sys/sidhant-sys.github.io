@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ModernItineraryView } from './ModernItineraryView';
@@ -8,13 +8,92 @@ import { BudgetOverviewTabs } from './BudgetOverviewTabs';
 import { QuickActionsGrid } from './QuickActionsGrid';
 import { CurrencyDropdown } from './CurrencyDropdown';
 import { TravelIntelligenceWidget } from './TravelIntelligenceWidget';
+import { Footer } from './Footer';
 import { ItineraryApiResponse } from '../types/api';
 import { TierType } from './TierSelector';
 import { useBooking } from '../hooks/useBooking';
 import { navigateToConfirmation } from '../utils/navigation';
 import tripInspiration1 from '../assets/trip-inspiration1.png';
 import tripInspiration2 from '../assets/trip-inspiration2.png';
-import { ChevronRight, ShoppingCart } from 'lucide-react';
+import { ChevronRight, ShoppingCart, ChevronDown, Crown, Wallet, Gem } from 'lucide-react';
+
+interface TierDropdownProps {
+  currentTier: TierType;
+  onTierChange: (tier: TierType) => void;
+}
+
+const TierDropdown: React.FC<TierDropdownProps> = ({ currentTier, onTierChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const tiers = [
+    { id: 'budgeted' as TierType, name: 'Budgeted', icon: <Wallet className="w-4 h-4" /> },
+    { id: 'premium' as TierType, name: 'Premium', icon: <Crown className="w-4 h-4" /> },
+    { id: 'luxury' as TierType, name: 'Luxury', icon: <Gem className="w-4 h-4" /> }
+  ];
+
+  const currentTierData = tiers.find(tier => tier.id === currentTier);
+
+  const handleTierSelect = (tier: TierType) => {
+    onTierChange(tier);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      {/* Dropdown Trigger */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="inline-flex items-center justify-between gap-2 px-3 py-2 text-sm border border-border rounded-md bg-background hover:bg-muted/50 text-foreground font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 min-w-[100px] cursor-pointer"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+      >
+        <div className="flex items-center gap-2">
+          {currentTierData?.icon}
+          <span>{currentTierData?.name}</span>
+        </div>
+        <ChevronDown 
+          className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`} 
+          strokeWidth={1.5} 
+        />
+      </button>
+
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)}
+          />
+          
+          {/* Menu */}
+          <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-background border border-border rounded-md shadow-lg">
+            <div className="py-1">
+              {tiers.map((tier) => (
+                <button
+                  key={tier.id}
+                  onClick={() => handleTierSelect(tier.id)}
+                  className={`w-full px-3 py-2 text-left text-sm hover:bg-muted/50 transition-colors duration-150 flex items-center gap-2 cursor-pointer ${
+                    currentTier === tier.id 
+                      ? 'bg-muted text-foreground font-medium' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  role="option"
+                  aria-selected={currentTier === tier.id}
+                >
+                  {tier.icon}
+                  <span>{tier.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 interface EnhancedItineraryViewProps {
   itinerary: any[];
@@ -38,6 +117,10 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   const [selectedMediaCategory, setSelectedMediaCategory] = useState('all');
   const [selectedBookingCategory, setSelectedBookingCategory] = useState<string | null>(null);
   const [currentTier, setCurrentTier] = useState<TierType>(selectedTier);
+  const [isNavbarFixed, setIsNavbarFixed] = useState(false);
+  const [hasModifications, setHasModifications] = useState(false);
+  const [showModificationWarning, setShowModificationWarning] = useState(false);
+  const [pendingViewMode, setPendingViewMode] = useState<'overview' | 'itinerary' | 'media' | null>(null);
 
   // Handle category click with scroll to top
   const handleCategoryClick = (category: string) => {
@@ -45,6 +128,151 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
     // Scroll to top when category is clicked
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Handle view mode changes with modification check
+  const handleViewModeChange = (newViewMode: 'overview' | 'itinerary' | 'media') => {
+    // If switching away from itinerary and there are modifications, show warning
+    if (viewMode === 'itinerary' && hasModifications && newViewMode !== 'itinerary') {
+      setPendingViewMode(newViewMode);
+      setShowModificationWarning(true);
+      return;
+    }
+    
+    // Direct switch if no modifications or not leaving itinerary
+    setViewMode(newViewMode);
+  };
+
+  // Handle modification warning actions
+  const handleContinueWithoutSaving = () => {
+    setShowModificationWarning(false);
+    setHasModifications(false);
+    if (pendingViewMode) {
+      setViewMode(pendingViewMode);
+      setPendingViewMode(null);
+    }
+  };
+
+  const handleCancelSwitch = () => {
+    setShowModificationWarning(false);
+    setPendingViewMode(null);
+  };
+
+  const handleBookNow = async () => {
+    if (!apiResponse?.id) {
+      alert('No itinerary ID available for booking');
+      return;
+    }
+    
+    setShowModificationWarning(false);
+    await handleBooking(apiResponse.id, currentTier);
+  };
+
+  // Scroll detection for fixed navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      requestAnimationFrame(() => {
+        const navbarElement = document.querySelector('[data-navbar-header]') as HTMLElement;
+        if (navbarElement) {
+          const rect = navbarElement.getBoundingClientRect();
+          // Trigger fixed navbar when the original navbar scrolls past with buffer
+          setIsNavbarFixed(rect.bottom <= -10);
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handle dropdown visibility when modal is open
+  useEffect(() => {
+    if (showModificationWarning) {
+      // Add comprehensive CSS to hide all possible dropdown patterns
+      const style = document.createElement('style');
+      style.id = 'modal-dropdown-hide';
+      style.textContent = `
+        /* Hide specific dropdown patterns but protect our modal */
+        [role="listbox"]:not([data-modal] *),
+        [role="menu"]:not([data-modal] *),
+        [data-radix-popper-content-wrapper]:not([data-modal] *),
+        [data-radix-popper-content]:not([data-modal] *),
+        .dropdown-menu:not([data-modal] *),
+        [data-state="open"] > div:not([data-modal] *),
+        [data-state="open"] + div:not([data-modal] *) {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+        
+        /* Force our modal to always be visible with highest priority */
+        [data-modal="modification-warning"] {
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          z-index: 999999 !important;
+        }
+        
+        [data-modal="modification-warning"] > * {
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+        }
+        
+        [data-modal="modification-warning"] .flex {
+          display: flex !important;
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Multiple approaches to close dropdowns
+      const closeDropdowns = () => {
+        // Method 1: Escape key
+        document.dispatchEvent(new KeyboardEvent('keydown', { 
+          key: 'Escape',
+          keyCode: 27,
+          which: 27,
+          bubbles: true 
+        }));
+        
+        // Method 2: Click outside at multiple locations
+        const locations = [
+          { x: 0, y: 0 },
+          { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+          { x: 10, y: 10 }
+        ];
+        
+        locations.forEach(loc => {
+          document.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            clientX: loc.x,
+            clientY: loc.y
+          }));
+        });
+
+        // Method 3: Focus away from dropdowns
+        document.body.focus();
+      };
+
+      // Try multiple times with different delays
+      const timers = [
+        setTimeout(closeDropdowns, 0),
+        setTimeout(closeDropdowns, 50),
+        setTimeout(closeDropdowns, 100)
+      ];
+
+      return () => {
+        timers.forEach(timer => clearTimeout(timer));
+        const existingStyle = document.getElementById('modal-dropdown-hide');
+        if (existingStyle) {
+          existingStyle.remove();
+        }
+      };
+    }
+  }, [showModificationWarning]);
   
   // Booking hook
   const { handleBooking, isBooking } = useBooking({
@@ -133,14 +361,17 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   // Experience video
   const experienceVideo = '/experience.mp4';
 
-  // Dynamic media items for trip inspiration from generatedImagesUrl
+  // Dynamic media items from generated images (both general and activity-specific)
   const mediaItems = useMemo(() => {
+    const allMediaItems: any[] = [];
+    const baseUrl = 'https://amadeus.cltp.in/api/files/images/';
+
+    // Add general generated images (trip inspiration)
     if (apiResponse?.generatedImages && apiResponse.generatedImages.length > 0) {
-      return apiResponse.generatedImages.map((imageUrl, index) => {
-        // Append https://amadeus.cltp.in domain to image URLs
+      const inspirationImages = apiResponse.generatedImages.map((imageUrl, index) => {
         const fullImageUrl = imageUrl.startsWith('/') 
-          ? `https://amadeus.cltp.in/api/files/images${imageUrl}`
-          : `https://amadeus.cltp.in/api/files/images/${imageUrl}`;
+          ? `${baseUrl}${imageUrl.slice(1)}`
+          : `${baseUrl}${imageUrl}`;
         
         return {
           id: `generated-image-${index}`,
@@ -152,6 +383,46 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
           category: 'inspiration'
         };
       });
+      allMediaItems.push(...inspirationImages);
+    }
+
+    // Add activity-specific generated images
+    if (safeDayWiseItinerary && safeDayWiseItinerary.length > 0) {
+      safeDayWiseItinerary.forEach((dayData, dayIndex) => {
+        if (dayData.schedule) {
+          dayData.schedule.forEach((activity, activityIndex) => {
+            if (activity.generated_images && activity.generated_images.length > 0) {
+              const activityImages = activity.generated_images.map((imageUrl, imageIndex) => {
+                const fullImageUrl = `${baseUrl}${imageUrl}`;
+                
+                // Determine category based on activity type
+                let category = 'activities';
+                if (activity.type === 'hotel') category = 'accommodation';
+                else if (activity.type === 'meal') category = 'activities';
+                else if (activity.type === 'flight' || activity.type === 'commute') category = 'activities';
+                
+                return {
+                  id: `activity-image-${dayIndex}-${activityIndex}-${imageIndex}`,
+                  type: 'image',
+                  url: fullImageUrl,
+                  title: activity.name || `${activity.type} on Day ${dayData.day}`,
+                  description: activity.description || `${activity.type} activity`,
+                  location: typeof activity.location === 'string' ? activity.location : destination,
+                  category,
+                  day: dayData.day,
+                  activityType: activity.type
+                };
+              });
+              allMediaItems.push(...activityImages);
+            }
+          });
+        }
+      });
+    }
+
+    // Return all media items or fallback to static images
+    if (allMediaItems.length > 0) {
+      return allMediaItems;
     }
     
     // Fallback to static images if no generated images available
@@ -175,29 +446,62 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
         category: 'inspiration'
       }
     ];
-  }, [apiResponse?.generatedImages, destination]);
+  }, [apiResponse?.generatedImages, destination, safeDayWiseItinerary]);
 
-  // Static carousel media items (always use assets, separate from Trip Inspiration)
-  const carouselMediaItems: MediaItem[] = [
-    {
-      id: 'carousel-1',
-      type: 'image',
-      url: tripInspiration1,
-      title: 'Parisian Streets',
-      description: 'Charming cobblestone streets of Montmartre',
-      location: 'Montmartre, Paris',
-      category: 'inspiration'
-    },
-    {
-      id: 'carousel-2',
-      type: 'image',
-      url: tripInspiration2,
-      title: 'Eiffel Tower View',
-      description: 'Stunning view of the Eiffel Tower',
-      location: 'Central Paris',
-      category: 'inspiration'
+  // Trip inspiration carousel - collect all generated_images from activities
+  const carouselMediaItems: MediaItem[] = useMemo(() => {
+    const baseUrl = 'https://amadeus.cltp.in/api/files/images/';
+    const allGeneratedImages: MediaItem[] = [];
+
+    // Collect all generated_images from all activities across all days
+    if (safeDayWiseItinerary && safeDayWiseItinerary.length > 0) {
+      safeDayWiseItinerary.forEach((dayData, dayIndex) => {
+        if (dayData.schedule) {
+          dayData.schedule.forEach((activity, activityIndex) => {
+            if (activity.generated_images && activity.generated_images.length > 0) {
+              const activityImages = activity.generated_images.map((imageUrl, imageIndex) => ({
+                id: `trip-inspiration-${dayIndex}-${activityIndex}-${imageIndex}`,
+                type: 'image' as const,
+                url: `${baseUrl}${imageUrl}`,
+                title: activity.name || `${activity.type} on Day ${dayData.day}`,
+                description: activity.description || `Experience ${activity.type} in ${destination}`,
+                location: typeof activity.location === 'string' ? activity.location : destination,
+                category: 'inspiration' as const
+              }));
+              allGeneratedImages.push(...activityImages);
+            }
+          });
+        }
+      });
     }
-  ];
+
+    // If we have generated images, use them; otherwise fallback to static images
+    if (allGeneratedImages.length > 0) {
+      return allGeneratedImages;
+    }
+
+    // Fallback to static images
+    return [
+      {
+        id: 'carousel-1',
+        type: 'image',
+        url: tripInspiration1,
+        title: 'Trip Inspiration',
+        description: `Beautiful views of ${destination}`,
+        location: destination,
+        category: 'inspiration'
+      },
+      {
+        id: 'carousel-2',
+        type: 'image',
+        url: tripInspiration2,
+        title: 'Travel Destination',
+        description: `Stunning scenery from ${destination}`,
+        location: destination,
+        category: 'inspiration'
+      }
+    ];
+  }, [safeDayWiseItinerary, destination]);
 
   // Helper function to count items by type using correct data sources
   const getItemCountByType = (type: string): number => {
@@ -392,8 +696,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
             <p className="text-gray-600">Get excited about your destination</p>
           </div>
           <button 
-            onClick={() => setViewMode('media')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+            onClick={() => handleViewModeChange('media')}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer"
           >
             View All
             <ChevronRight className="w-4 h-4" />
@@ -437,8 +741,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
             <p className="text-muted-foreground">Discover stunning visuals from your destination</p>
           </div>
           <button 
-            onClick={() => setViewMode('overview')}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer bg-gray-50 rounded-lg hover:bg-gray-100"
+            onClick={() => handleViewModeChange('overview')}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
           >
             Back to Overview
             <ChevronRight className="w-4 h-4 rotate-180" strokeWidth={1.5} />
@@ -520,8 +824,15 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Modern Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm">
+      {/* Fixed Navbar - appears when scrolled past original */}
+      {isNavbarFixed && (
+        <div 
+          className="fixed top-0 left-0 right-0 z-50 shadow-lg border-b border-border animate-in slide-in-from-top-2 fade-in duration-300"
+          style={{
+            backgroundColor: '#ffffff',
+            opacity: 1
+          }}
+        >
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -543,15 +854,158 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
               {/* Tier Selector */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-muted-foreground">Tier:</span>
-                <select
-                  value={currentTier}
-                  onChange={(e) => setCurrentTier(e.target.value as TierType)}
-                  className="px-3 py-1.5 text-sm border border-border rounded-lg bg-background hover:bg-muted/50 transition-colors"
+                  <TierDropdown
+                    currentTier={currentTier}
+                    onTierChange={setCurrentTier}
+                  />
+                </div>
+              </div>
+              
+              {/* Right side: Tabs and Book Now Button */}
+              <div className="flex items-center gap-4">
+                {/* Navigation Tabs */}
+                <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg">
+                  <button
+                    onClick={() => handleViewModeChange('overview')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                      viewMode === 'overview'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Overview
+                  </button>
+                  <button
+                    onClick={() => handleViewModeChange('itinerary')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                      viewMode === 'itinerary'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Itinerary
+                  </button>
+                  <button
+                    onClick={() => handleViewModeChange('media')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                      viewMode === 'media'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Media
+                  </button>
+                </div>
+                
+                {/* Global Book Now Button - Prominent Position */}
+                <button
+                  onClick={async () => {
+                    if (!apiResponse?.id) {
+                      alert('No itinerary ID available for booking');
+                      return;
+                    }
+                    
+                    console.log('Global Book Now clicked for tier:', currentTier);
+                    await handleBooking(apiResponse.id, currentTier);
+                  }}
+                  disabled={isBooking || !apiResponse?.id}
+                  className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md cursor-pointer text-md"
                 >
-                  <option value="budgeted">Budgeted</option>
-                  <option value="premium">Premium</option>
-                  <option value="luxury">Luxury</option>
-                </select>
+                  <ShoppingCart className="w-4 h-4" />
+                  {isBooking ? 'Booking...' : 'Book Now'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Spacer when fixed navbar is active */}
+      {isNavbarFixed && <div className="h-20" />}
+
+      {/* Modification Warning Modal */}
+      {showModificationWarning && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" data-modal="modification-warning">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleCancelSwitch} />
+          
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-300 rounded" style={{ backgroundColor: '#ffffff', zIndex: 100000 }}>
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Unsaved Changes</h3>
+                <p className="text-sm text-gray-600">You have modifications to your itinerary</p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="mb-6">
+              <p className="text-gray-700 leading-relaxed">
+                You've made changes to your day-wise itinerary selections. If you continue, these changes will be lost. 
+                Would you like to book your current selections or continue without saving?
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelSwitch}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleContinueWithoutSaving}
+                className="flex-1 px-4 py-2 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors duration-200 cursor-pointer"
+              >
+                Continue
+              </button>
+              <button
+                onClick={handleBookNow}
+                disabled={isBooking}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                {isBooking ? 'Booking...' : 'Book Now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modern Header */}
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm" data-navbar-header>
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onBackToChat}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                ← Back to Chat
+              </button>
+              <div className="h-6 w-px bg-border" />
+              <h1 className="text-xl font-semibold text-foreground">
+                {apiResponse?.to || destination}
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <CurrencyDropdown />
+              
+              {/* Tier Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">Tier:</span>
+                <TierDropdown
+                  currentTier={currentTier}
+                  onTierChange={setCurrentTier}
+                />
               </div>
             </div>
             
@@ -560,8 +1014,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
               {/* Navigation Tabs */}
               <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg">
                 <button
-                  onClick={() => setViewMode('overview')}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                  onClick={() => handleViewModeChange('overview')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors  ${
                     viewMode === 'overview'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -570,8 +1024,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
                   Overview
                 </button>
                 <button
-                  onClick={() => setViewMode('itinerary')}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                  onClick={() => handleViewModeChange('itinerary')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors  ${
                     viewMode === 'itinerary'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -580,8 +1034,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
                   Itinerary
                 </button>
                 <button
-                  onClick={() => setViewMode('media')}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                  onClick={() => handleViewModeChange('media')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors  ${
                     viewMode === 'media'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -603,7 +1057,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
                   await handleBooking(apiResponse.id, currentTier);
                 }}
                 disabled={isBooking || !apiResponse?.id}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md cursor-pointer text-md"
+                className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md  text-md"
               >
                 <ShoppingCart className="w-4 h-4" />
                 {isBooking ? 'Booking...' : 'Book Now'}
@@ -637,8 +1091,10 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
               <div>
                 <ModernItineraryView
                   dayWiseData={safeDayWiseItinerary}
-                  onBack={() => setViewMode('overview')}
+                  onBack={() => handleViewModeChange('overview')}
                   dates={selectedTierData?.overview?.duration || dates}
+                  onModificationsChange={setHasModifications}
+                  globalUpsells={safeUpsellOptions}
                 />
               </div>
             )}
@@ -646,6 +1102,12 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
           </>
         )}
       </div>
+
+      {/* Footer
+      <div className="mt-16">
+        <Footer />
+      </div> */}
+      <Footer />
     </div>
   );
 };

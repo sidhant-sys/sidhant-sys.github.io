@@ -105,14 +105,6 @@ export const BudgetOverviewTabs: React.FC<BudgetOverviewTabsProps> = ({
       iconBg: 'bg-purple-100'
     },
     {
-      icon: Star,
-      label: 'Rating',
-      value: `${rating || 4.5}/5`,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50',
-      iconBg: 'bg-yellow-100'
-    },
-    {
       icon: Wallet,
       label: 'Total Budget',
       value: formatPriceFromUSD(costBreakdown.total),
@@ -213,7 +205,7 @@ export const BudgetOverviewTabs: React.FC<BudgetOverviewTabsProps> = ({
             {/* Budget Header */}
             <div className="text-center">
               {/* <h3 className="text-xl font-bold text-gray-900 mb-2">Budget Breakdown</h3> */}
-              <p className="text-gray-600">Detailed cost analysis for your trip</p>
+              <p className="text-gray-600 text-sm">Detailed cost analysis for your trip</p>
             </div>
 
             {/* Categories Grid */}

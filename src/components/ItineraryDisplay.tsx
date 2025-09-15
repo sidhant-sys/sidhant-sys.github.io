@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useBooking } from '../hooks/useBooking';
 import { TierType } from './TierSelector';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface ItineraryItem {
   id: string;
@@ -139,6 +140,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
   // Removed expandedDay state as we're using a different design approach
   const [selectedTier, setSelectedTier] = useState<'budgeted' | 'premium' | 'luxury'>('budgeted');
   const [animatedValues, setAnimatedValues] = useState<{ [key: string]: number }>({});
+  const { formatPrice: currencyFormatPrice } = useCurrency();
 
   // Removed debug logging as we're using a different design approach
 
@@ -636,7 +638,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                         
                         {dayTotal > 0 && (
                           <div className="text-right">
-                            <div className="text-2xl font-bold text-green-600">${dayTotal.toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-green-600">{currencyFormatPrice(dayTotal)}</div>
                             <div className="text-xs text-gray-500">estimated cost</div>
                           </div>
                         )}
@@ -694,7 +696,18 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                                     )}
 
                                     {/* Location */}
-                                    {scheduleItem.location && (
+                                    {scheduleItem.location && 
+                                     scheduleItem.type !== 'flight' && 
+                                     !scheduleItem.flight_name && 
+                                     !scheduleItem.airline && 
+                                     !scheduleItem.flight_origin && 
+                                     !scheduleItem.flight_destination &&
+                                     !(scheduleItem.name && (scheduleItem.name.toLowerCase().includes('departure') || scheduleItem.name.toLowerCase().includes('arrival') || scheduleItem.name.toLowerCase().includes('flight'))) &&
+                                     (typeof scheduleItem.location === 'string' ? scheduleItem.location : 'Location coordinates available') !== 
+                                     (scheduleItem.airline && scheduleItem.flight_name ? `${scheduleItem.airline} ${scheduleItem.flight_name}` :
+                                      scheduleItem.flight_origin && scheduleItem.flight_destination ? `${scheduleItem.flight_origin} → ${scheduleItem.flight_destination}` :
+                                      scheduleItem.from && scheduleItem.to ? `${scheduleItem.from} → ${scheduleItem.to}` :
+                                      scheduleItem.location && typeof scheduleItem.location === 'string' ? scheduleItem.location : '') && (
                                       <div className="flex items-center space-x-2 text-sm text-gray-500 mb-3">
                                         <MapPin className="w-4 h-4" />
                                         <span>
@@ -708,12 +721,18 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
                                   </div>
 
                                   {/* Price */}
-                                  {scheduleItem.price && (
-                                    <div className="text-right ml-4">
-                                      <div className="text-lg font-bold text-green-600">${scheduleItem.price.toLocaleString()}</div>
-                                      <div className="text-xs text-gray-500">per person</div>
-                                    </div>
-                                  )}
+                                  <div className="text-right ml-4">
+                                    {scheduleItem.price && scheduleItem.price > 0 ? (
+                                      <>
+                                        <div className="text-lg font-bold text-green-600">{currencyFormatPrice(scheduleItem.price)}</div>
+                                        <div className="text-xs text-gray-500">per person</div>
+                                      </>
+                                    ) : (
+                                      <div className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+                                        No fees involved
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
 
                                 {/* Special Details Based on Type */}

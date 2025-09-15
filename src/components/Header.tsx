@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useStackedFixedContext } from '../contexts/StackedFixedContext';
 
 interface HeaderProps {
   showBackButton?: boolean;
@@ -15,6 +16,11 @@ export const Header: React.FC<HeaderProps> = ({
   className = ""
 }) => {
   const navigate = useNavigate();
+  const headerRef = useRef<HTMLElement>(null);
+  const { registerFixedElement, unregisterFixedElement, getTopPosition } = useStackedFixedContext();
+  
+  const HEADER_ID = 'main-header';
+  const HEADER_HEIGHT = 84; // h-16 (64px) + py-2 (16px) + border (1px) + some buffer
 
   const handleLogoClick = () => {
     navigate('/');
@@ -28,8 +34,41 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  useEffect(() => {
+    // Use actual measured height if available, otherwise fallback to estimated height
+    const actualHeight = headerRef.current?.offsetHeight || HEADER_HEIGHT;
+    
+    // Register this header as a fixed element
+    registerFixedElement(HEADER_ID, actualHeight, 100); // High z-index for header
+    
+    return () => {
+      unregisterFixedElement(HEADER_ID);
+    };
+  }, [registerFixedElement, unregisterFixedElement]);
+  
+  // Update height when component resizes
+  useEffect(() => {
+    const updateHeight = () => {
+      if (headerRef.current) {
+        const actualHeight = headerRef.current.offsetHeight;
+        registerFixedElement(HEADER_ID, actualHeight, 100);
+      }
+    };
+    
+    // Update height after render
+    const timeoutId = setTimeout(updateHeight, 0);
+    
+    return () => clearTimeout(timeoutId);
+  });
+
+  const topPosition = getTopPosition(HEADER_ID);
+
   return (
-    <header className={`sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 ${className} py-2`}>
+    <header 
+      ref={headerRef}
+      className={`fixed left-0 right-0 z-[100] bg-white border-b border-gray-200 ${className} py-2`}
+      style={{ top: `${topPosition}px` }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className={`flex items-center h-16 ${title ? 'justify-between' : 'justify-start'}`}>
           {/* Left Section */}

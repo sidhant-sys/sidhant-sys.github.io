@@ -5,7 +5,9 @@ import { Header } from '../components/Header';
 import { useItinerary } from '../contexts/ItineraryContext';
 import { navigateToHome } from '../utils/navigation';
 import { CurrencyProvider } from '../contexts/CurrencyContext';
+import { StackedFixedProvider, useStackedFixedContext } from '../contexts/StackedFixedContext';
 import { getItineraryByTrackingId } from '../services/itineraryApi';
+import loaderVideo from '../assets/loader.mp4';
 
 export const ItineraryView: React.FC = () => {
   const navigate = useNavigate();
@@ -46,10 +48,25 @@ export const ItineraryView: React.FC = () => {
       <CurrencyProvider>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading itinerary...</p>
+            <div style={{height: '300px', width: '300px'}}>
+              <video
+                src={loaderVideo}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="mx-auto object-cover rounded-lg"
+
+              />
+            </div>
+            <p className="text-muted-foreground font-medium">Generating itinerary...</p>
+            <p className="text-muted-foreground font-normal">This may take a few minutes...</p>
           </div>
         </div>
+        {/* <SimpleLoader
+          isVisible={true}
+          minDuration={5000}
+        /> */}
       </CurrencyProvider>
     );
   }
@@ -131,12 +148,33 @@ export const ItineraryView: React.FC = () => {
 
   return (
     <CurrencyProvider>
-      <div className="min-h-screen bg-background">
-        <Header 
-          showBackButton={true}
-          onBackClick={() => navigateToHome(navigate)}
-          title="Travel Itinerary"
+      <StackedFixedProvider>
+        <ItineraryContent 
+          apiResponse={apiResponse} 
+          navigate={navigate} 
+          itinerary={itinerary}
         />
+      </StackedFixedProvider>
+    </CurrencyProvider>
+  );
+};
+
+const ItineraryContent: React.FC<{
+  apiResponse: any;
+  navigate: any;
+  itinerary: any[];
+}> = ({ apiResponse, navigate, itinerary }) => {
+  const { getContentPadding } = useStackedFixedContext();
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header 
+        showBackButton={true}
+        onBackClick={() => navigateToHome(navigate)}
+        title="Travel Itinerary"
+      />
+      {/* Dynamic top padding based on all fixed elements */}
+      <div style={{ paddingTop: `${getContentPadding()}px` }}>
         <EnhancedItineraryView
           itinerary={itinerary}
           destination={apiResponse?.to || ''}
@@ -149,6 +187,6 @@ export const ItineraryView: React.FC = () => {
           apiResponse={apiResponse || undefined}
         />
       </div>
-    </CurrencyProvider>
+    </div>
   );
 };

@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/badge';
 import { Header } from '../components/Header';
 import { navigateToHome, navigateToItinerary } from '../utils/navigation';
 import { useItinerary } from '../contexts/ItineraryContext';
+import { StackedFixedProvider, useStackedFixedContext } from '../contexts/StackedFixedContext';
 import { getItineraryByTrackingId } from '../services/itineraryApi';
 
 // Confetti component
@@ -279,6 +280,43 @@ export const ConfirmationPage: React.FC = () => {
   console.log('Hotel Booking Result:', apiResponse?.hotelBookingResult);
 
   return (
+    <StackedFixedProvider>
+      <ConfirmationContent 
+        showConfetti={showConfetti}
+        navigate={navigate}
+        apiResponse={apiResponse}
+        id={id}
+        handleViewPDF={handleViewPDF}
+        handleDownloadPDF={handleDownloadPDF}
+        handleDownloadItinerary={handleDownloadItinerary}
+        handleShareItinerary={handleShareItinerary}
+      />
+    </StackedFixedProvider>
+  );
+};
+
+const ConfirmationContent: React.FC<{
+  showConfetti: boolean;
+  navigate: any;
+  apiResponse: any;
+  id: string | undefined;
+  handleViewPDF: (url: string) => void;
+  handleDownloadPDF: (url: string, filename: string) => void;
+  handleDownloadItinerary: () => void;
+  handleShareItinerary: () => void;
+}> = ({ 
+  showConfetti, 
+  navigate, 
+  apiResponse, 
+  id, 
+  handleViewPDF, 
+  handleDownloadPDF, 
+  handleDownloadItinerary, 
+  handleShareItinerary 
+}) => {
+  const { getContentPadding } = useStackedFixedContext();
+
+  return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {showConfetti && <Confetti />}
       
@@ -289,7 +327,9 @@ export const ConfirmationPage: React.FC = () => {
         title="Booking Confirmed"
       />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Dynamic top padding based on all fixed elements */}
+      <div style={{ paddingTop: `${getContentPadding()}px` }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6 animate-pulse">
@@ -547,6 +587,7 @@ export const ConfirmationPage: React.FC = () => {
           >
             ← Back to Home
           </Button>
+        </div>
         </div>
       </div>
     </div>

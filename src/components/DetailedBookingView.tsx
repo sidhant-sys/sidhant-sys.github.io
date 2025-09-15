@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { ImageCarousel } from './ImageCarousel';
 import { getFormattedPrice } from '../utils/itineraryTransform';
 import { 
   Plane, 
@@ -47,6 +48,7 @@ interface BookingItem {
   time?: string;
   groupSize?: string;
   difficulty?: string;
+  generated_images?: string[];
 }
 
 interface DayScheduleItem {
@@ -70,6 +72,7 @@ interface DayScheduleItem {
   amenities?: string[];
   cuisine?: string;
   dress_code?: string;
+  generated_images?: string[];
   group_size?: string;
   difficulty?: string;
 }
@@ -268,7 +271,9 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
         time: item.time || item[`${category.slice(0, -1)}_time`],
         // Activity specific data
         groupSize: item.group_size || item[`${category.slice(0, -1)}_group_size`],
-        difficulty: item.difficulty || item[`${category.slice(0, -1)}_difficulty`]
+        difficulty: item.difficulty || item[`${category.slice(0, -1)}_difficulty`],
+        // Generated images
+        generated_images: item.generated_images || []
       };
       allItems.push(bookingItem);
     });
@@ -333,7 +338,11 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
                   <CardContent className="p-0">
                     {/* Image */}
                     <div className="h-48 bg-muted relative">
-                      {getFallbackContent()}
+                      <ImageCarousel
+                        images={item.generated_images || []}
+                        alt={item.name || `${category} item`}
+                        className="w-full h-full"
+                      />
                       {/* {item.available && (
                         <Badge className="absolute top-2 right-2 bg-success text-green-600">
                           Available

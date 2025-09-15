@@ -177,7 +177,7 @@ export const TravelIntelligenceWidget: React.FC<TravelIntelligenceWidgetProps> =
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
