@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { ImageCarousel } from './ImageCarousel';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getFormattedPrice } from '../utils/itineraryTransform';
 import { 
   Plane, 
@@ -298,7 +298,7 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
   const currentCategory = categoryInfo[category];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{marginTop: '53px'}}>
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button
@@ -338,10 +338,13 @@ export const DetailedBookingView: React.FC<DetailedBookingViewProps> = ({
                   <CardContent className="p-0">
                     {/* Image */}
                     <div className="h-48 bg-muted relative">
-                      <ImageCarousel
-                        images={item.generated_images || []}
+                      <ImageWithFallback
+                        src={(item.generated_images && item.generated_images.length > 0) 
+                          ? `https://amadeus.cltp.in/api/files/images/${item.generated_images[0]}`
+                          : item.image || ''
+                        }
                         alt={item.name || `${category} item`}
-                        className="w-full h-full"
+                        className="w-full h-full object-cover"
                       />
                       {/* {item.available && (
                         <Badge className="absolute top-2 right-2 bg-success text-green-600">

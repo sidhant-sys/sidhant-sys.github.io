@@ -13,7 +13,6 @@ import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
 import { DailyIntelligence } from './DailyIntelligence';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { useStackedFixedContext } from '../contexts/StackedFixedContext';
 import { capitalize, professionalColors } from './ui/utils';
 
 interface DayScheduleItem {
@@ -251,14 +250,9 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
   const [selectedActivitiesByDay, setSelectedActivitiesByDay] = useState<Map<number, Set<string>>>(new Map());
   const [initialSelections, setInitialSelections] = useState<Map<number, Set<string>>>(new Map());
   const [selectedGlobalUpsells, setSelectedGlobalUpsells] = useState<Set<string>>(new Set());
-  const [isCombinedHeaderSticky, setIsCombinedHeaderSticky] = useState(false);
   const [isUpsellExpanded, setIsUpsellExpanded] = useState(false);
   const [isActivitiesExpanded, setIsActivitiesExpanded] = useState(true); // Default to expanded
   const { formatPrice: currencyFormatPrice } = useCurrency();
-  const { registerFixedElement, unregisterFixedElement, getTopPosition, getContentPadding } = useStackedFixedContext();
-  
-  const STICKY_HEADER_ID = 'itinerary-sticky-header';
-  const STICKY_HEADER_HEIGHT = 144; // More accurate height calculation
 
   // Initialize all activities as selected when component mounts or when new day data is available
   useEffect(() => {
@@ -350,43 +344,6 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Scroll detection for combined sticky header
-  useEffect(() => {
-    let ticking = false;
-    
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          // Check if day header has been scrolled past - this triggers the combined sticky behavior
-          const dayHeaderElement = document.querySelector('[data-day-header]') as HTMLElement;
-          if (dayHeaderElement) {
-            const headerRect = dayHeaderElement.getBoundingClientRect();
-            const mainHeaderHeight = getContentPadding(); // Height of all fixed headers above
-            const shouldBeSticky = headerRect.top <= mainHeaderHeight;
-            
-            if (shouldBeSticky !== isCombinedHeaderSticky) {
-              setIsCombinedHeaderSticky(shouldBeSticky);
-              
-              if (shouldBeSticky) {
-                registerFixedElement(STICKY_HEADER_ID, STICKY_HEADER_HEIGHT, 90);
-              } else {
-                unregisterFixedElement(STICKY_HEADER_ID);
-              }
-            }
-          }
-          
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      unregisterFixedElement(STICKY_HEADER_ID);
-    };
-  }, [expandedDay, isCombinedHeaderSticky, registerFixedElement, unregisterFixedElement, getContentPadding]);
 
   const formatTime = (time: string) => {
     if (!time) return '';
@@ -501,99 +458,6 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
-      {/* Combined Sticky Header - Shows when day header is scrolled past */}
-      {isCombinedHeaderSticky && (
-        <div 
-          className="fixed left-0 right-0 z-[90] bg-white shadow-lg border-b border-gray-200"
-          style={{
-            top: `${getTopPosition(STICKY_HEADER_ID)}px`,
-            marginTop: '16px',
-            paddingTop: '16px',
-            backgroundColor: '#ffffff',
-          }}
-        >
-          <div className="max-w-6xl mx-auto" style={{paddingLeft: '14%', paddingRight: '14%', paddingTop: '16px', paddingBottom: '16px'}}>
-            {/* Day Navigation Section */}
-            <div className="py-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Daily Itinerary</h2>
-                
-                <div className="flex space-x-2">
-                  {(dayWiseData || []).map((dayData) => (
-                    <button
-                      key={dayData.day}
-                      onClick={() => setExpandedDay(expandedDay === dayData.day ? null : dayData.day)}
-                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-200 cursor-pointer ${
-                        expandedDay === dayData.day
-                          ? 'bg-blue-500 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      Day {dayData.day}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            {/* Day Header Section */}
-            {expandedDay && (() => {
-              const dayData = dayWiseData?.find(d => d.day === expandedDay);
-              if (!dayData) return null;
-              
-              const safeSchedule = dayData.schedule || [];
-              const dayTotal = getTotalDayCost(dayData.day, safeSchedule);
-
-              return (
-                <div className="py-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex">
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">Day {dayData.day}</h3>
-                        <p className="text-sm text-gray-600">{safeSchedule.length} activities planned</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {dayTotal > 0 ? (
-                        <>
-                          <div className="text-right space-y-2">
-                            {/* Trip Total - Primary */}
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="text-xs text-gray-500 uppercase tracking-wide">Total</span>
-                              <div className="text-xl font-bold text-gray-900">{formatPrice(getTotalTripCost())}</div>
-                            </div>
-                            
-                            {/* Day Cost - Secondary with subtle styling */}
-                            <div className="flex items-center justify-end gap-2 px-3 py-1 bg-gray-50 rounded-lg">
-                              <span className="text-xs text-gray-500">Today</span>
-                              <div className="text-sm font-medium text-gray-700">{formatPrice(dayTotal)}</div>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-right space-y-2">
-                          {/* Trip Total - Primary */}
-                          <div className="flex items-center justify-end gap-2">
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Total</span>
-                            <div className="text-xl font-bold text-gray-900">{formatPrice(getTotalTripCost())}</div>
-                          </div>
-                          
-                          {/* No fees message */}
-                          <div className="flex items-center justify-end">
-                            <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-medium">
-                              No fees today
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-      )}
       {/* Compact Trip Header */}
       {/* <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 px-4">
         <div className="flex items-center justify-between">
@@ -649,10 +513,6 @@ export const ModernItineraryView: React.FC<ModernItineraryViewProps> = ({
 
         return (
           <div className="space-y-4">
-            {/* Spacer for sticky header */}
-            {isCombinedHeaderSticky && (
-              <div style={{ height: `${STICKY_HEADER_HEIGHT}px` }} className="w-full" />
-            )}
             
             {/* Day Header - Normal (sticky behavior handled by combined header) */}
             <div 

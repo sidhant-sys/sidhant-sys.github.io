@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Video, Camera, Bookmark, Share, Calendar, Users, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Video, Camera, Calendar, Users, MapPin } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 export interface MediaItem {
@@ -23,6 +23,7 @@ interface MediaCarouselProps {
   onShare?: () => void;
   className?: string;
   showVideo?: boolean; // New prop to control video display
+  toIata?: string; // Destination IATA code for video selection
 }
 
 export const MediaCarousel: React.FC<MediaCarouselProps> = ({
@@ -35,9 +36,19 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
   onSave,
   onShare,
   className = '',
-  showVideo = true // Default to true for backward compatibility
+  showVideo = true, // Default to true for backward compatibility
+  toIata
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Select video based on destination IATA code
+  const getVideoUrl = () => {
+    if (toIata === 'DXB') {
+      return '/Dubai_video.mp4';
+    } else if (toIata === 'CDG') {
+      return '/Paris_video.mp4';
+    }
+    // Fallback to experienceVideo for other destinations
+    return experienceVideo;
+  };
 
   // Create carousel items array - conditionally include video, then add images
   const carouselItems: MediaItem[] = [
@@ -45,7 +56,7 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
     ...(showVideo ? [{
       id: 'video-experience',
       type: 'video' as const,
-      url: experienceVideo,
+      url: getVideoUrl(),
       title: 'Experience Preview',
       description: 'Immersive travel experience video',
       location: destination || 'Featured Destination',
@@ -53,6 +64,39 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
     }] : []),
     ...items
   ];
+
+  // Initialize currentIndex - start with video (index 0) if luxury tier, otherwise start with first item
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    // If showVideo is true (luxury tier), start with video at index 0
+    // If showVideo is false, start with first image at index 0
+    return 0;
+  });
+
+  // Check if current carousel has video
+  const hasVideo = carouselItems.length > 0 && carouselItems[0].type === 'video';
+
+  // Reset carousel to index 0 when showVideo prop changes (tier switching)
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [showVideo]);
+
+  // Auto-play functionality - only for images, not when video is present
+  useEffect(() => {
+    // Don't autoplay if:
+    // 1. Only one or no items
+    // 2. Video is present in the carousel
+    if (carouselItems.length <= 1 || hasVideo) return;
+
+    const autoPlayInterval = setInterval(() => {
+      setCurrentIndex((prevIndex) => {
+        // Move to next item, loop back to 0 if at the end
+        return prevIndex === carouselItems.length - 1 ? 0 : prevIndex + 1;
+      });
+    }, 3000); // 3 second interval
+
+    // Clean up interval on component unmount or when dependencies change
+    return () => clearInterval(autoPlayInterval);
+  }, [carouselItems.length, hasVideo]); // Re-run effect when number of items changes or video presence changes
 
   // Navigation functions - finite carousel
   const nextSlide = () => {
@@ -92,28 +136,31 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
       <div className="relative w-full h-full">
         {carouselItems.length > 0 && currentItem ? (
           currentItem.type === 'video' ? (
-            <video
-              key={currentIndex}
-              src={currentItem.url}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              className="w-full h-full object-cover"
-              style={{ width: '100%', height: '24rem' }}
-              onError={(e) => {
-                const target = e.target as HTMLVideoElement;
-                target.style.display = 'none';
-                const fallbackImg = document.createElement('img');
-                fallbackImg.src = items[0]?.url || '';
-                fallbackImg.className = 'w-full h-full object-cover';
-                fallbackImg.style.width = '100%';
-                fallbackImg.style.height = '24rem';
-                fallbackImg.alt = currentItem.title || '';
-                target.parentNode?.appendChild(fallbackImg);
-              }}
-            />
+            <div className="relative w-full h-full">
+              <video
+                key={`video-${currentIndex}`}
+                src={currentItem.url}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                controls
+                controlsList="nodownload"
+                className="w-full h-full object-cover relative z-10"
+                style={{ 
+                  width: '100%', 
+                  height: '24rem',
+                  position: 'relative',
+                  zIndex: 10
+                }}
+                onError={(e) => {
+                  console.error('Video loading error:', e);
+                  const target = e.target as HTMLVideoElement;
+                  target.style.display = 'none';
+                }}
+              />
+            </div>
           ) : (
             <ImageWithFallback
               key={currentIndex}
@@ -130,12 +177,15 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
         )}
       </div>
       
-      {/* Minimal overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+      {/* Minimal overlay - only for images, not videos */}
+      {currentItem && currentItem.type !== 'video' && (
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+      )}
       
-      {/* Navigation arrows - only show if more than 1 item */}
+      {/* Navigation arrows - only show if more than 1 item and positioned to not interfere with video controls */}
       {carouselItems.length > 1 && (
-        <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3">
+        <>
+          {/* Left arrow */}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -143,15 +193,16 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
               if (!isFirstSlide) prevSlide();
             }}
             disabled={isFirstSlide}
-            className={`w-8 h-8 backdrop-blur-sm border rounded-full flex items-center justify-center transition-all z-10 ${
+            className={`absolute top-1/2 -translate-y-1/2 left-3 w-10 h-10 backdrop-blur-sm border rounded-full flex items-center justify-center transition-all z-20 ${
               isFirstSlide
-                ? 'bg-white/10 border-white/10 cursor-not-allowed'
-                : 'bg-white/20 hover:bg-white/30 border-white/20 cursor-pointer'
+                ? 'bg-white/10 border-white/10 cursor-not-allowed opacity-50'
+                : 'bg-white/20 hover:bg-white/30 border-white/20 cursor-pointer hover:scale-110'
             }`}
           >
-            <ChevronLeft className={`w-4 h-4 ${isFirstSlide ? 'text-white/40' : 'text-white'}`} strokeWidth={1.5} />
+            <ChevronLeft className={`w-5 h-5 ${isFirstSlide ? 'text-white/40' : 'text-white'}`} strokeWidth={2} />
           </button>
           
+          {/* Right arrow */}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -159,15 +210,15 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
               if (!isLastSlide) nextSlide();
             }}
             disabled={isLastSlide}
-            className={`w-8 h-8 backdrop-blur-sm border rounded-full flex items-center justify-center transition-all z-10 ${
+            className={`absolute top-1/2 -translate-y-1/2 right-3 w-10 h-10 backdrop-blur-sm border rounded-full flex items-center justify-center transition-all z-20 ${
               isLastSlide
-                ? 'bg-white/10 border-white/10 cursor-not-allowed'
-                : 'bg-white/20 hover:bg-white/30 border-white/20 cursor-pointer'
+                ? 'bg-white/10 border-white/10 cursor-not-allowed opacity-50'
+                : 'bg-white/20 hover:bg-white/30 border-white/20 cursor-pointer hover:scale-110'
             }`}
           >
-            <ChevronRight className={`w-4 h-4 ${isLastSlide ? 'text-white/40' : 'text-white'}`} strokeWidth={1.5} />
+            <ChevronRight className={`w-5 h-5 ${isLastSlide ? 'text-white/40' : 'text-white'}`} strokeWidth={2} />
           </button>
-        </div>
+        </>
       )}
       
       {/* Action buttons */}
@@ -188,9 +239,13 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
         </button>
       </div> */}
 
-      {/* Media type indicators (pointers) - only show if more than 1 item */}
+      {/* Media type indicators (pointers) - positioned to not interfere with video controls */}
       {carouselItems.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+        <div className={`absolute flex gap-2 z-20 ${
+          currentItem && currentItem.type === 'video' 
+            ? 'top-4 right-4' // Move to top-right corner for videos to avoid overlapping content
+            : 'bottom-4 left-1/2 -translate-x-1/2' // Keep centered at bottom for images
+        }`}>
           {carouselItems.map((item, index) => (
             <button
               key={item.id}
@@ -199,24 +254,26 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
                 e.stopPropagation();
                 goToSlide(index);
               }}
-              className={`w-6 h-6 rounded-full backdrop-blur-sm border transition-all duration-200 flex items-center justify-center ${
-                index === currentIndex
-                  ? 'bg-white/40 border-white/60 scale-110'
-                  : 'bg-white/15 border-white/30 hover:bg-white/25 hover:scale-105'
-              }`}
+              // className={`w-8 h-8  backdrop-blur-sm border transition-all duration-200 flex items-center justify-center cursor-pointer ${
+              //   index === currentIndex
+              //     ? 'bg-white/50 border-white/70 scale-110 shadow-lg'
+              //     : 'bg-white/20 border-white/40 hover:bg-white/30 hover:scale-105'
+              // }`}
             >
-              {item.type === 'video' ? (
-                <Video className="w-3 h-3 text-white" strokeWidth={1.5} />
-              ) : (
-                <Camera className="w-3 h-3 text-white" strokeWidth={1.5} />
-              )}
+              {/* {item.type === 'video' && (
+                <Video className="w-4 h-4 text-white" strokeWidth={1.5} />
+              ) } */}
             </button>
           ))}
         </div>
       )}
       
-      {/* Destination info */}
-      <div className="absolute bottom-4 left-4 text-white">
+      {/* Destination info - positioned to not interfere with video controls */}
+      <div className={`absolute left-4 text-white z-5 ${
+        currentItem && currentItem.type === 'video'
+          ? 'top-4' // Move to top for videos to avoid controls
+          : 'bottom-4' // Keep at bottom for images
+      }`}>
         <h1 className="text-2xl font-bold mb-2 tracking-tight">
           {destination || 'Featured Destination'}
         </h1>

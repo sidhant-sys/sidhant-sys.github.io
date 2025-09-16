@@ -2,7 +2,7 @@ import React from 'react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="mt-auto" style={{padding: '64px 0'}}>
+    <footer className="mt-auto" style={{padding: '64px 0 0 0'}}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center space-y-2">
           <p className="text-sm  text-muted font-medium">

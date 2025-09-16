@@ -116,14 +116,14 @@ export const useTrackingPolling = (options: UseTrackingPollingOptions = {}) => {
     // Wait a moment before first call to ensure loader is properly visible
     setTimeout(() => {
       makeApiCall();
-    }, 2000);
+    }, 5000);
     
     // Set up interval for subsequent calls (starting after initial delay)
     setTimeout(() => {
       apiPollingRef.current = setInterval(() => {
         makeApiCall();
-      }, 10000);
-    }, 2000);
+      }, 5000);
+    }, 0);
     
   }, [onItineraryGenerated, stopApiPolling]);
 

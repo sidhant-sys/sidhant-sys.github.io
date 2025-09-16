@@ -305,18 +305,15 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
   
   const selectedTierData = getTierData(currentTier);
   
-  // Extract data from the correct paths based on your specification
-  const safeDayWiseItinerary = selectedTierData?.days || [];
-  const safeUpsellOptions = (selectedTierData as any)?.upsell || [];
+  // Extract data from the correct paths based on your specification - memoized to prevent re-renders
+  const safeDayWiseItinerary = useMemo(() => selectedTierData?.days || [], [selectedTierData?.days]);
+  const safeUpsellOptions = useMemo(() => (selectedTierData as any)?.upsell || [], [(selectedTierData as any)?.upsell]);
   
-  // Debug: Log upsell options
-  console.log('Current tier:', currentTier);
-  console.log('Selected tier data upsell:', (selectedTierData as any)?.upsell);
-  console.log('Safe upsell options:', safeUpsellOptions);
+  // Debug: Log upsell options (removed to prevent console spam)
   
-  // Extract flights and hotels directly from tier
-  const flightsData = (selectedTierData as any)?.flights || [];
-  const hotelsData = (selectedTierData as any)?.hotels || [];
+  // Extract flights and hotels directly from tier - memoized to prevent re-renders
+  const flightsData = useMemo(() => (selectedTierData as any)?.flights || [], [(selectedTierData as any)?.flights]);
+  const hotelsData = useMemo(() => (selectedTierData as any)?.hotels || [], [(selectedTierData as any)?.hotels]);
   
   // Extract activities, meals, and commute from days schedule
   const extractItemsFromDays = (type: 'activity' | 'meal' | 'commute') => {
@@ -337,16 +334,11 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
     return items;
   };
   
-  const activitiesData = extractItemsFromDays('activity');
-  const mealsData = extractItemsFromDays('meal');
-  const commuteData = extractItemsFromDays('commute');
+  const activitiesData = useMemo(() => extractItemsFromDays('activity'), [safeDayWiseItinerary]);
+  const mealsData = useMemo(() => extractItemsFromDays('meal'), [safeDayWiseItinerary]);
+  const commuteData = useMemo(() => extractItemsFromDays('commute'), [safeDayWiseItinerary]);
   
-  // Debug: Log the day-wise data to see what we're getting
-  console.log('Current tier:', currentTier);
-  console.log('Selected tier data:', selectedTierData);
-  console.log('Day-wise itinerary data:', safeDayWiseItinerary);
-  console.log('Day-wise itinerary length:', safeDayWiseItinerary.length);
-  console.log('Day numbers in itinerary:', safeDayWiseItinerary.map(d => d.day));
+  // Debug: Log the day-wise data (removed to prevent console spam)
   
   // Get cost breakdown from selected tier
   const costBreakdown = selectedTierData?.overview?.cost_breakdown ? {
@@ -546,6 +538,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
               onShare={() => {/* Handle share */}}
               className="h-96 w-full"
               showVideo={currentTier === 'luxury'} // Only show video for luxury tier
+              toIata={apiResponse?.toIata} // Pass destination IATA code for video selection
             />
           </div>
         </div>
@@ -770,12 +763,12 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       </div>
 
       {/* Media Grid */}
-      <div className="flex flex-col md:flex-row lg:flex-row flex-wrap gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {mediaItems
           .filter(item => selectedMediaCategory === 'all' || item.category === selectedMediaCategory)
           .map((media) => (
-            <div key={media.id} className="relative group cursor-pointer flex-1 min-w-0 md:flex-1 lg:flex-1">
-              <div className="aspect-video rounded-xl overflow-hidden bg-muted/30">
+            <div key={media.id} className="relative group cursor-pointer">
+              <div className="w-[200px] h-[200px] rounded-xl overflow-hidden bg-muted/30">
                 <ImageWithFallback
                   src={media.url}
                   alt={media.title}
@@ -784,8 +777,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-xl" />
               <div className="absolute bottom-3 left-3 text-white">
-                <h5 className="font-medium text-sm mb-1">{media.title}</h5>
-                <p className="text-xs text-white/80">{media.location}</p>
+                <h5 className="font-medium text-sm mb-1 line-clamp-1">{media.title}</h5>
+                <p className="text-xs text-white/80 line-clamp-1">{media.location}</p>
               </div>
             </div>
         ))}
@@ -833,7 +826,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
             opacity: 1
           }}
         >
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="max-w-7xl mx-auto px-4 py-4" style={{marginTop: '53px'}}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
@@ -980,7 +973,7 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       )}
 
       {/* Modern Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm" data-navbar-header>
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm" data-navbar-header style={{marginTop: '53px'}}>
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -1107,7 +1100,8 @@ export const EnhancedItineraryView: React.FC<EnhancedItineraryViewProps> = ({
       <div className="mt-16">
         <Footer />
       </div> */}
-      <Footer />
+      <div style={{paddingBottom: '32px'}}> <Footer /></div>
+      
     </div>
   );
 };

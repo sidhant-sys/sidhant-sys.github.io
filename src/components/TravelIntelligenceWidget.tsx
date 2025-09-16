@@ -155,7 +155,7 @@ export const TravelIntelligenceWidget: React.FC<TravelIntelligenceWidgetProps> =
   return (
     <div className={`bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-100">
+      <div className="py-2 px-4 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-1">Travel Intelligence</h3>
@@ -163,15 +163,15 @@ export const TravelIntelligenceWidget: React.FC<TravelIntelligenceWidgetProps> =
               Smart insights for {destination || 'your destination'}
             </p>
           </div>
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-muted" />
           </div>
         </div>
       </div>
 
       {/* Tabs */}
       {tabs.length > 1 && (
-        <div className="px-6 py-3 border-b border-gray-100">
+        <div className="px-4 py-3 border-b border-gray-100">
           <div className="flex gap-1">
             {tabs.map((tab) => (
               <button
@@ -192,7 +192,7 @@ export const TravelIntelligenceWidget: React.FC<TravelIntelligenceWidgetProps> =
       )}
 
       {/* Content */}
-      <div className="p-6">
+      <div className="px-4 py-4">
         {activeTab === 'weather' && data.weather && (
           <div className="space-y-4">
             {/* Weather Conditions */}

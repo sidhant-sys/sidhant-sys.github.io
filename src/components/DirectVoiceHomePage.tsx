@@ -23,6 +23,7 @@ import { TypingText } from './TypingText';
 import { useNavigate } from 'react-router-dom';
 import { navigateToItinerary } from '../utils/navigation';
 import { useItinerary } from '../contexts/ItineraryContext';
+import loaderVideo from '../assets/loader.mp4';
 
 const DirectVoiceHomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,15 +33,6 @@ const DirectVoiceHomePage: React.FC = () => {
   
   // Use proper state management
   const {
-    messages,
-    userRequest,
-    selectedTier,
-    currentStep,
-    layoutMode,
-    bookedItems,
-    itinerary,
-    destination,
-    dates,
     setMessages,
     setUserRequest,
     setSelectedTier,
@@ -69,9 +61,7 @@ const DirectVoiceHomePage: React.FC = () => {
 
   // Set up polling for tracking ID changes
   const {
-    isPolling,
     isGeneratingItinerary,
-    hasGeneratedItinerary,
     showSuccessMessage,
     dismissSuccessMessage
   } = useTrackingPolling({
@@ -187,7 +177,7 @@ const DirectVoiceHomePage: React.FC = () => {
 
       // Create new widget
       const widget = document.createElement('elevenlabs-convai');
-      widget.setAttribute('agent-id', 'agent_2901k4f0hzs4fg3t25wevecgpdgc');
+      widget.setAttribute('agent-id', 'agent_5201k56aadrrfkat9sn5hftc0yj4');
       document.body.appendChild(widget);
 
       // Trigger the widget after a short delay
@@ -260,19 +250,29 @@ const DirectVoiceHomePage: React.FC = () => {
     { number: "50K+", label: "Happy Travelers" },
     { number: "100+", label: "Countries Covered" },
     { number: "99.9%", label: "Uptime" },
-    { number: "4.9/5", label: "User Rating" }
+    
   ];
 
   // Show loading screen when generating itinerary
   if (isGeneratingItinerary) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2 font-circular">Generating Your Itinerary</h2>
-          <p className="text-gray-600 font-circular">Please wait while we create your personalized travel plan...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div style={{height: '300px', width: '300px'}}>
+              <video
+                src={loaderVideo}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="mx-auto object-cover rounded-lg"
+      controls={false}
+              />
+            </div>
+            <p className="text-muted-foreground font-medium">Generating itinerary...</p>
+            <p className="text-muted-foreground font-normal">This may take a few minutes...</p>
+          </div>
         </div>
-      </div>
     );
   }
 
@@ -306,6 +306,9 @@ const DirectVoiceHomePage: React.FC = () => {
           title="AI Travel Assistant"
         />
 
+        {/* Spacer for fixed header */}
+        <div className="h-20"></div>
+
         {/* Chat Messages */}
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="space-y-6">
@@ -334,8 +337,11 @@ const DirectVoiceHomePage: React.FC = () => {
       {/* Header */}
       <Header />
       
+      {/* Spacer for fixed header */}
+      <div style={{height: '50px'}}></div>
+      
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <section className="overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Section - CTA */}
@@ -369,7 +375,8 @@ const DirectVoiceHomePage: React.FC = () => {
               <Button
                 onClick={handleStartVoiceRecording}
                 disabled={isWidgetOpen}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-blue-600 hover:bg-blue-700 text-white py-8 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{paddingLeft: '32px', paddingRight: '32px'}}
               >
                 {isWidgetOpen ? (
                   <>
@@ -386,7 +393,7 @@ const DirectVoiceHomePage: React.FC = () => {
             </div>
 
             {/* Right Section - Chatbot Interface Demo */}
-            <div className="relative">
+            
               <Card className="shadow-2xl border-0 bg-white overflow-hidden">
                 <CardContent className="p-0">
                   {/* Chatbot Header */}
@@ -427,7 +434,7 @@ const DirectVoiceHomePage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            
           </div>
         </div>
 
@@ -521,7 +528,7 @@ const DirectVoiceHomePage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mt-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 mt-6">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-xl lg:text-2xl font-bold text-white mb-2">
@@ -533,7 +540,7 @@ const DirectVoiceHomePage: React.FC = () => {
               </div>
             ))}
           </div>
-          <div style={{marginTop: '48px'}}><Footer  /></div>
+          <div style={{marginTop: '8px', color: 'white'}}><Footer  /></div>
         </div>
       </section>
     </div>

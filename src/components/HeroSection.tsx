@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
+import { CleartripLogo } from '../assets/svg/cleartripLogo';
 
 const TypewriterText: React.FC<{ text: string; delay?: number; speed?: number }> = ({ 
   text, 
@@ -73,11 +74,12 @@ export const HeroSection: React.FC = () => {
         <div className="flex items-center justify-between">
           {/* Amadeus Logo - Top Left */}
           <div className="flex items-center">
-            <img 
+            {/* <img 
               src="/amadeus-logo.png" 
               alt="Amadeus Logo" 
               className="w-[104px] h-4 opacity-80"
-            />
+            /> */}
+            <CleartripLogo  />
           </div>
           
           {/* Professional Badge */}

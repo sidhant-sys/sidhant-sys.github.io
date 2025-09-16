@@ -32,6 +32,10 @@ class ItineraryApiClient {
         throw new Error('Tracking ID is required');
       }
 
+      // Add 5-second delay before making the API call
+      console.log('⏰ Waiting 5 seconds before calling itinerary API...');
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      console.log('✅ 5-second delay completed, making API call now');
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);

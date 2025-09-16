@@ -4,21 +4,21 @@ export interface Currency {
   code: string;
   symbol: string;
   name: string;
-  rate: number; // Exchange rate relative to USD
+  rate: number; // Exchange rate relative to USD (US Dollar)
 }
 
 export const SUPPORTED_CURRENCIES: Currency[] = [
-  { code: 'USD', symbol: '$', name: 'US Dollar', rate: 1.0 },
-  { code: 'EUR', symbol: '€', name: 'Euro', rate: 0.85 },
-  { code: 'GBP', symbol: '£', name: 'British Pound', rate: 0.73 },
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee', rate: 83.12 },
-  { code: 'THB', symbol: '฿', name: 'Thai Baht', rate: 35.50 },
-  { code: 'JPY', symbol: '¥', name: 'Japanese Yen', rate: 149.50 },
-  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', rate: 1.35 },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', rate: 1.52 },
-  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', rate: 1.34 },
-  { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc', rate: 0.88 },
-  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan', rate: 7.24 }
+  { code: 'USD', symbol: '$', name: 'US Dollar', rate: 1.0 }, // Base currency
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee', rate: 83.0 }, // 1 USD = 83 INR
+  { code: 'EUR', symbol: '€', name: 'Euro', rate: 0.85 }, // 1 USD = 0.85 EUR
+  { code: 'GBP', symbol: '£', name: 'British Pound', rate: 0.73 }, // 1 USD = 0.73 GBP
+  { code: 'THB', symbol: '฿', name: 'Thai Baht', rate: 35.5 }, // 1 USD = 35.5 THB
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen', rate: 150.0 }, // 1 USD = 150 JPY
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', rate: 1.35 }, // 1 USD = 1.35 CAD
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', rate: 1.52 }, // 1 USD = 1.52 AUD
+  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', rate: 1.34 }, // 1 USD = 1.34 SGD
+  { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc', rate: 0.88 }, // 1 USD = 0.88 CHF
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan', rate: 7.2 } // 1 USD = 7.2 CNY
 ];
 
 interface CurrencyContextType {

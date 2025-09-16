@@ -127,7 +127,7 @@ class HttpClient implements ApiClient {
 // Create default API client instance
 const defaultConfig: ApiConfig = {
   baseUrl: process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api',
-  timeout: 10000,
+  timeout: 5000,
   retries: 3,
   headers: {
     'Accept': 'application/json',

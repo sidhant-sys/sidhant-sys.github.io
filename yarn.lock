@@ -2345,7 +2345,7 @@ rollup@^4.43.0:
     "@rollup/rollup-win32-x64-msvc" "4.50.1"
     fsevents "~2.3.2"
 
-rxjs@*:
+rxjs@^7.5.2:
   version "7.8.2"
   resolved "https://registry.npmjs.org/rxjs/-/rxjs-7.8.2.tgz#955bc473ed8af11a002a2be52071bf475638607b"
   integrity sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==

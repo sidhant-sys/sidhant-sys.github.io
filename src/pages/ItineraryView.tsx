@@ -56,7 +56,7 @@ export const ItineraryView: React.FC = () => {
                 muted
                 playsInline
                 className="mx-auto object-cover rounded-lg"
-
+      controls={false}
               />
             </div>
             <p className="text-muted-foreground font-medium">Generating itinerary...</p>
@@ -171,7 +171,7 @@ const ItineraryContent: React.FC<{
       <Header 
         showBackButton={true}
         onBackClick={() => navigateToHome(navigate)}
-        title="Travel Itinerary"
+        title="Your personalized itinerary"
       />
       {/* Dynamic top padding based on all fixed elements */}
       <div style={{ paddingTop: `${getContentPadding()}px` }}>

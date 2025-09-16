@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useRef } from 'react';
 
 interface FixedElement {
   id: string;
@@ -8,54 +8,63 @@ interface FixedElement {
 }
 
 export const useStackedFixed = () => {
-  const [fixedElements, setFixedElements] = useState<FixedElement[]>([]);
+  // Use only ref to avoid any state-based re-renders
+  const elementsRef = useRef<FixedElement[]>([]);
 
-  const registerFixedElement = useCallback((id: string, height: number, zIndex: number = 50) => {
-    setFixedElements(prev => {
-      const exists = prev.find(el => el.id === id);
-      if (exists) {
-        return prev.map(el => 
-          el.id === id 
-            ? { ...el, height, zIndex, isVisible: true }
-            : el
-        );
+  const registerFixedElement = (id: string, height: number, zIndex: number = 50) => {
+    const elements = elementsRef.current;
+    const existingIndex = elements.findIndex(el => el.id === id);
+    
+    if (existingIndex !== -1) {
+      // Update existing element only if values changed
+      const existing = elements[existingIndex];
+      if (existing.height !== height || existing.zIndex !== zIndex || !existing.isVisible) {
+        elements[existingIndex] = { id, height, zIndex, isVisible: true };
+        // Re-sort by zIndex
+        elementsRef.current = [...elements].sort((a, b) => b.zIndex - a.zIndex);
       }
-      return [...prev, { id, height, zIndex, isVisible: true }].sort((a, b) => b.zIndex - a.zIndex);
-    });
-  }, []);
+    } else {
+      // Add new element
+      elements.push({ id, height, zIndex, isVisible: true });
+      // Re-sort by zIndex
+      elementsRef.current = [...elements].sort((a, b) => b.zIndex - a.zIndex);
+    }
+  };
 
-  const unregisterFixedElement = useCallback((id: string) => {
-    setFixedElements(prev => 
-      prev.map(el => 
-        el.id === id 
-          ? { ...el, isVisible: false }
-          : el
-      )
-    );
-  }, []);
+  const unregisterFixedElement = (id: string) => {
+    const elements = elementsRef.current;
+    const existingIndex = elements.findIndex(el => el.id === id);
+    
+    if (existingIndex !== -1) {
+      elements[existingIndex] = { ...elements[existingIndex], isVisible: false };
+      elementsRef.current = [...elements];
+    }
+  };
 
-  const getTopPosition = useCallback((id: string): number => {
-    const element = fixedElements.find(el => el.id === id);
+  const getTopPosition = (id: string): number => {
+    const elements = elementsRef.current;
+    const element = elements.find(el => el.id === id);
     if (!element) return 0;
 
     // Calculate cumulative height of all visible elements with higher z-index
-    // Sort by z-index to ensure proper stacking order
-    const elementsAbove = fixedElements
+    const elementsAbove = elements
       .filter(el => el.isVisible && el.zIndex > element.zIndex)
       .sort((a, b) => b.zIndex - a.zIndex);
     
     return elementsAbove.reduce((sum, el) => sum + el.height, 0);
-  }, [fixedElements]);
+  };
 
-  const getTotalFixedHeight = useCallback((): number => {
-    return fixedElements
+  const getTotalFixedHeight = (): number => {
+    return elementsRef.current
       .filter(el => el.isVisible)
       .reduce((sum, el) => sum + el.height, 0);
-  }, [fixedElements]);
+  };
 
-  const getContentPadding = useCallback((): number => {
-    return getTotalFixedHeight();
-  }, [getTotalFixedHeight]);
+  const getContentPadding = (): number => {
+    return elementsRef.current
+      .filter(el => el.isVisible)
+      .reduce((sum, el) => sum + el.height, 0);
+  };
 
   return {
     registerFixedElement,
@@ -63,6 +72,6 @@ export const useStackedFixed = () => {
     getTopPosition,
     getTotalFixedHeight,
     getContentPadding,
-    fixedElements: fixedElements.filter(el => el.isVisible)
+    fixedElements: elementsRef.current.filter(el => el.isVisible)
   };
 };

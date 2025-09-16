@@ -28,3 +28,9 @@ export const useStackedFixedContext = () => {
   }
   return context;
 };
+
+// Safe version that returns null if context is not available
+export const useStackedFixedContextSafe = () => {
+  const context = useContext(StackedFixedContext);
+  return context || null;
+};

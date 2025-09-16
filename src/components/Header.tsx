@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStackedFixedContext } from '../contexts/StackedFixedContext';
+import { useStackedFixedContextSafe } from '../contexts/StackedFixedContext';
+import { CleartripLogo } from '../assets/svg/cleartripLogo';
 
 interface HeaderProps {
   showBackButton?: boolean;
@@ -17,10 +18,10 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const headerRef = useRef<HTMLElement>(null);
-  const { registerFixedElement, unregisterFixedElement, getTopPosition } = useStackedFixedContext();
+  const stackedFixedContext = useStackedFixedContextSafe();
   
   const HEADER_ID = 'main-header';
-  const HEADER_HEIGHT = 84; // h-16 (64px) + py-2 (16px) + border (1px) + some buffer
+  const HEADER_HEIGHT = 80; // h-16 (64px) + py-2 (16px) = 80px total
 
   const handleLogoClick = () => {
     navigate('/');
@@ -35,38 +36,45 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   useEffect(() => {
-    // Use actual measured height if available, otherwise fallback to estimated height
-    const actualHeight = headerRef.current?.offsetHeight || HEADER_HEIGHT;
-    
-    // Register this header as a fixed element
-    registerFixedElement(HEADER_ID, actualHeight, 100); // High z-index for header
-    
-    return () => {
-      unregisterFixedElement(HEADER_ID);
-    };
-  }, [registerFixedElement, unregisterFixedElement]);
+    // Only register if context is available
+    if (stackedFixedContext) {
+      const { registerFixedElement, unregisterFixedElement } = stackedFixedContext;
+      // Use actual measured height if available, otherwise fallback to estimated height
+      const actualHeight = headerRef.current?.offsetHeight || HEADER_HEIGHT;
+      
+      // Register this header as a fixed element
+      registerFixedElement(HEADER_ID, actualHeight, 9999999); // Highest z-index for header
+      
+      return () => {
+        unregisterFixedElement(HEADER_ID);
+      };
+    }
+  }, [stackedFixedContext]);
   
-  // Update height when component resizes
+  // Update height when component resizes (only when stackedFixedContext changes)
   useEffect(() => {
-    const updateHeight = () => {
-      if (headerRef.current) {
-        const actualHeight = headerRef.current.offsetHeight;
-        registerFixedElement(HEADER_ID, actualHeight, 100);
-      }
-    };
-    
-    // Update height after render
-    const timeoutId = setTimeout(updateHeight, 0);
-    
-    return () => clearTimeout(timeoutId);
-  });
+    if (stackedFixedContext) {
+      const { registerFixedElement } = stackedFixedContext;
+      const updateHeight = () => {
+        if (headerRef.current) {
+          const actualHeight = headerRef.current.offsetHeight;
+          registerFixedElement(HEADER_ID, actualHeight, 9999999);
+        }
+      };
+      
+      // Update height after render
+      const timeoutId = setTimeout(updateHeight, 100); // Slightly longer delay to ensure DOM is ready
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [stackedFixedContext]); // Add dependency array to prevent infinite loop
 
-  const topPosition = getTopPosition(HEADER_ID);
+  const topPosition = stackedFixedContext ? stackedFixedContext.getTopPosition(HEADER_ID) : 0;
 
   return (
     <header 
       ref={headerRef}
-      className={`fixed left-0 right-0 z-[100] bg-white border-b border-gray-200 ${className} py-2`}
+      className={`fixed left-0 right-0 z-[9999999] bg-white border-b border-gray-200 shadow-sm ${className} py-2`}
       style={{ top: `${topPosition}px` }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -100,11 +108,12 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={handleLogoClick}
               className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
             >
-              <img 
+              {/* <img 
                 src="/amadeus-logo.png" 
                 alt="Amadeus Logo" 
                 className="h-4 w-auto"
-              />
+              /> */}
+              <CleartripLogo  />
               {/* <span className="text-xl font-bold text-gray-900 font-circular">
                 Hermes
               </span> */}
