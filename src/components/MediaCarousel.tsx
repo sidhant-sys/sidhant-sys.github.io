@@ -92,7 +92,7 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
         // Move to next item, loop back to 0 if at the end
         return prevIndex === carouselItems.length - 1 ? 0 : prevIndex + 1;
       });
-    }, 3000); // 3 second interval
+    }, 5000); // 3 second interval
 
     // Clean up interval on component unmount or when dependencies change
     return () => clearInterval(autoPlayInterval);

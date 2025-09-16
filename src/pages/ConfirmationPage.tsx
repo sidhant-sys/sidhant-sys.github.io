@@ -189,89 +189,27 @@ export const ConfirmationPage: React.FC = () => {
     }
   };
 
-  // PDF handling functions - Make GET API calls to Amadeus CLTP
-  const handleViewPDF = async (pdfUrl: string) => {
-    console.log('View PDF clicked, URL:', pdfUrl);
-    if (pdfUrl) {
-      try {
-        // Construct full URL with Amadeus CLTP domain
-        const fullUrl = pdfUrl.startsWith('/') 
-          ? `https://amadeus.cltp.in${pdfUrl}`
-          : `https://amadeus.cltp.in/${pdfUrl}`;
-        
-        console.log('Making API call to:', fullUrl);
-        
-        // Make GET API call to view PDF
-        const response = await fetch(fullUrl, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/pdf',
-          },
-        });
-        
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          window.open(url, '_blank');
-          // Clean up the URL object after a delay
-          setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-        } else {
-          console.error('Failed to fetch PDF:', response.status);
-          alert('Failed to load PDF. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error fetching PDF:', error);
-        alert('Error loading PDF. Please check your connection.');
-      }
-    } else {
-      console.log('No PDF URL available');
-    }
+  // Voucher handling functions - Open local HTML files
+  const handleViewVoucher = (voucherType: 'flight' | 'hotel') => {
+    console.log('View voucher clicked, type:', voucherType);
+    const fileName = voucherType === 'flight' ? 'flight_booking.html' : 'hotel_booking.html';
+    const url = `/${fileName}`;
+    window.open(url, '_blank');
   };
 
-  const handleDownloadPDF = async (pdfUrl: string, filename: string) => {
-    console.log('Download PDF clicked, URL:', pdfUrl, 'Filename:', filename);
-    if (pdfUrl) {
-      try {
-        // Construct full URL with Amadeus CLTP domain
-        const fullUrl = pdfUrl.startsWith('/') 
-          ? `https://amadeus.cltp.in${pdfUrl}`
-          : `https://amadeus.cltp.in/${pdfUrl}`;
-        
-        console.log('Making API call to:', fullUrl);
-        
-        // Make GET API call to download PDF
-        const response = await fetch(fullUrl, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/pdf',
-          },
-        });
-        
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          
-          // Create download link
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          // Clean up the URL object after a delay
-          setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-        } else {
-          console.error('Failed to download PDF:', response.status);
-          alert('Failed to download PDF. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error downloading PDF:', error);
-        alert('Error downloading PDF. Please check your connection.');
-      }
-    } else {
-      console.log('No PDF URL available for download');
-    }
+  const handleDownloadVoucher = (voucherType: 'flight' | 'hotel') => {
+    console.log('Download voucher clicked, type:', voucherType);
+    const fileName = voucherType === 'flight' ? 'flight_booking.html' : 'hotel_booking.html';
+    const url = `/${fileName}`;
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Debug logging
@@ -286,8 +224,8 @@ export const ConfirmationPage: React.FC = () => {
         navigate={navigate}
         apiResponse={apiResponse}
         id={id}
-        handleViewPDF={handleViewPDF}
-        handleDownloadPDF={handleDownloadPDF}
+        handleViewVoucher={handleViewVoucher}
+        handleDownloadVoucher={handleDownloadVoucher}
         handleDownloadItinerary={handleDownloadItinerary}
         handleShareItinerary={handleShareItinerary}
       />
@@ -300,8 +238,8 @@ const ConfirmationContent: React.FC<{
   navigate: any;
   apiResponse: any;
   id: string | undefined;
-  handleViewPDF: (url: string) => void;
-  handleDownloadPDF: (url: string, filename: string) => void;
+  handleViewVoucher: (voucherType: 'flight' | 'hotel') => void;
+  handleDownloadVoucher: (voucherType: 'flight' | 'hotel') => void;
   handleDownloadItinerary: () => void;
   handleShareItinerary: () => void;
 }> = ({ 
@@ -309,8 +247,8 @@ const ConfirmationContent: React.FC<{
   navigate, 
   apiResponse, 
   id, 
-  handleViewPDF, 
-  handleDownloadPDF, 
+  handleViewVoucher, 
+  handleDownloadVoucher, 
   handleDownloadItinerary, 
   handleShareItinerary 
 }) => {
@@ -431,85 +369,67 @@ const ConfirmationContent: React.FC<{
             
             <div className="grid md:grid-cols-2 gap-6">
               {/* Flight Voucher */}
-              {apiResponse?.flightBookingResult && (
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Plane className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Flight Booking Voucher</h4>
-                      {/* <p className="text-sm text-gray-500">Reference: {apiResponse.flightBookingResult.bookingReference || 'N/A'}</p> */}
-                    </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Plane className="w-5 h-5 text-blue-600" />
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleViewPDF(apiResponse.flightBookingResult?.pdfViewUrl || '')}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Voucher
-                    </Button>
-                    <Button
-                      onClick={() => handleDownloadPDF(
-                        apiResponse.flightBookingResult?.pdfDownloadUrl || '',
-                        `flight_voucher_${apiResponse.flightBookingResult?.bookingReference || 'CT'}.pdf`
-                      )}
-                      variant="outline"
-                      className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 cursor-pointer"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Flight Booking Voucher</h4>
+                    <p className="text-sm text-gray-500">Your flight booking confirmation</p>
                   </div>
                 </div>
-              )}
+                
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleViewVoucher('flight')}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Voucher
+                  </Button>
+                  <Button
+                    onClick={() => handleDownloadVoucher('flight')}
+                    variant="outline"
+                    className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              </div>
 
               {/* Hotel Voucher */}
-              {apiResponse?.hotelBookingResult && (
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Hotel className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Hotel Booking Voucher</h4>
-                      {/* <p className="text-sm text-gray-500">Reference: {apiResponse.hotelBookingResult.data?.bookingReference || 'N/A'}</p> */}
-                    </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Hotel className="w-5 h-5 text-purple-600" />
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleViewPDF(apiResponse.hotelBookingResult?.pdfViewUrl || '')}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Voucher
-                    </Button>
-                    <Button
-                      onClick={() => handleDownloadPDF(
-                        apiResponse.hotelBookingResult?.pdfDownloadUrl || '',
-                        `hotel_voucher_${apiResponse.hotelBookingResult?.data?.bookingReference || 'HT'}.pdf`
-                      )}
-                      variant="outline"
-                      className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 cursor-pointer"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Hotel Booking Voucher</h4>
+                    <p className="text-sm text-gray-500">Your hotel booking confirmation</p>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* No vouchers message */}
-            {!apiResponse?.flightBookingResult && !apiResponse?.hotelBookingResult && (
-              <div className="text-center py-8">
-                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No booking vouchers available at this time.</p>
+                
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleViewVoucher('hotel')}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Voucher
+                  </Button>
+                  <Button
+                    onClick={() => handleDownloadVoucher('hotel')}
+                    variant="outline"
+                    className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
