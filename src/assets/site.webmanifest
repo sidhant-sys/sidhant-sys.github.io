@@ -1,0 +1,22 @@
+{
+  "name": "Hermes - Intelligent Travel Planning Assistant",
+  "short_name": "Hermes Travel",
+  "description": "AI-powered travel planning with budget-aware recommendations, real-time pricing, and personalized itineraries. Powered by Amadeus.",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/"
+}

@@ -20,6 +20,14 @@ export default defineConfig({
             console.log(`Copied ${video} to dist folder`)
           }
         })
+        
+        // Copy webmanifest file to dist folder
+        const webmanifestSrc = resolve(__dirname, 'src/assets/site.webmanifest')
+        const webmanifestDest = resolve(__dirname, 'dist/site.webmanifest')
+        if (existsSync(webmanifestSrc)) {
+          copyFileSync(webmanifestSrc, webmanifestDest)
+          console.log('Copied site.webmanifest to dist folder')
+        }
       }
     }
   ],
