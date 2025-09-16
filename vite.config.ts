@@ -28,6 +28,17 @@ export default defineConfig({
           copyFileSync(webmanifestSrc, webmanifestDest)
           console.log('Copied site.webmanifest to dist folder')
         }
+        
+        // Copy android-chrome icons to dist folder
+        const androidIcons = ['android-chrome-192x192.png', 'android-chrome-512x512.png']
+        androidIcons.forEach(icon => {
+          const src = resolve(__dirname, 'src/assets', icon)
+          const dest = resolve(__dirname, 'dist', icon)
+          if (existsSync(src)) {
+            copyFileSync(src, dest)
+            console.log(`Copied ${icon} to dist folder`)
+          }
+        })
       }
     }
   ],
